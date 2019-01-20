@@ -9,13 +9,13 @@ import measure_theory.integration data.sum
 noncomputable theory
 local attribute [instance, priority 0] classical.prop_decidable
 
-open classical set lattice filter
-
-variables {α : Type*} {β : Type*} {γ : Type*} {δ : Type*} {ε : Type*}
+open classical set lattice filter function
 
 namespace measure_theory
 
 namespace measure
+
+variables {α : Type*} {β : Type*} {γ : Type*} {δ : Type*} {ε : Type*}
 
 variables [measurable_space α] [measurable_space β]
 

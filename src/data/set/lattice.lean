@@ -603,6 +603,17 @@ lemma preimage_bInter {s : γ → set β} {t : set γ} {f : α → β} :
   f ⁻¹' (⋂ i∈t, s i) = (⋂ i∈t, f ⁻¹' s i) :=
 by ext; simp
 
+
+lemma preimage_subset_preimage_iff {α β} {f : α → β} (hf : surjective f)
+  (s t : set β) : f ⁻¹' s ⊆ f ⁻¹' t ↔ s ⊆ t :=
+iff.intro
+  begin
+    assume hfst b,
+    rcases hf b with ⟨b, rfl⟩,
+    exact @hfst b
+  end
+  (assume hst, monotone_preimage hst)
+
 end preimage
 
 
