@@ -466,6 +466,50 @@ end sum
 instance {β : α → Type v} [m : Πa, measurable_space (β a)] : measurable_space (sigma β) :=
 ⨅a, (m a).map (sigma.mk a)
 
+section pi
+
+instance pi.measurable_space (ι : Type*) (α : ι → Type*) [m : ∀i, measurable_space (α i)] :
+  measurable_space (Πi, α i) :=
+⨆i, (m i).comap (λf, f i)
+
+instance pi.measurable_space_Prop (ι : Prop) (α : ι → Type*) [m : ∀i, measurable_space (α i)] :
+  measurable_space (Πi, α i) :=
+⨆i, (m i).comap (λf, f i)
+
+lemma measurable_pi {ι : Type*} {α : ι → Type*} {β : Type*}
+  [m : ∀i, measurable_space (α i)] [measurable_space β] {f : β → Πi, α i} :
+  measurable f ↔ (∀i, measurable (λb, f b i)):=
+begin
+  rw [measurable, pi.measurable_space, supr_le_iff],
+  refine forall_congr (assume i, _),
+  rw [measurable_space.comap_le_iff_le_map, measurable_space.map_comp],
+  refl
+end
+
+lemma measurable_apply {ι : Type*} {α : ι → Type*} {β : Type*}
+  [m : ∀i, measurable_space (α i)] [measurable_space β] (f : β → Πi, α i) (i : ι)
+  (hf : measurable f) :
+  measurable (λb, f b i) :=
+measurable_pi.1 hf _
+
+lemma measurable_pi_Prop {ι : Prop} {α : ι → Type*} {β : Type*}
+  [m : ∀i, measurable_space (α i)] [measurable_space β] {f : β → Πi, α i} :
+  measurable f ↔ (∀i, measurable (λb, f b i)):=
+begin
+  rw [measurable, pi.measurable_space_Prop, supr_le_iff],
+  refine forall_congr (assume i, _),
+  rw [measurable_space.comap_le_iff_le_map, measurable_space.map_comp],
+  refl
+end
+
+lemma measurable_apply_Prop {p : Prop} {α : p → Type*} {β : Type*}
+  [m : ∀i, measurable_space (α i)] [measurable_space β] (f : β → Πi, α i) (h : p)
+  (hf : measurable f) :
+  measurable (λb, f b h) :=
+measurable_pi_Prop.1 hf _
+
+end pi
+
 end constructions
 
 /-- Equivalences between measurable spaces. Main application is the simplification of measurability
