@@ -66,10 +66,10 @@ variables [decidable_eq α]
 def lookup (a : α) (s : alist β) : option (β a) :=
 s.entries.lookup a
 
-theorem lookup_is_some {a : α} {s : alist β} :
+theorem lookup_is_some (a : α) (s : alist β) :
   (s.lookup a).is_some ↔ a ∈ s := lookup_is_some
 
-theorem lookup_eq_none {a : α} {s : alist β} :
+theorem lookup_eq_none (a : α) (s : alist β) :
   lookup a s = none ↔ a ∉ s :=
 lookup_eq_none
 
@@ -78,7 +78,11 @@ theorem perm_lookup {a : α} {s₁ s₂ : alist β} (p : s₁.entries ~ s₂.ent
 perm_lookup _ s₁.nodupkeys s₂.nodupkeys p
 
 instance (a : α) (s : alist β) : decidable (a ∈ s) :=
-decidable_of_iff _ lookup_is_some
+decidable_of_iff _ (lookup_is_some _ _)
+
+lemma mem_lookup_iff_set_mem [decidable_eq α] : Π (t : alist β) (x : α) (y : β x),
+  y ∈ t.lookup x ↔ sigma.mk x y ∈ t.entries
+| ⟨t,ht⟩ x y := list.mem_lookup_iff_set_mem _ _ ht
 
 /- replace -/
 

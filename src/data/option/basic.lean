@@ -117,4 +117,10 @@ theorem lift_or_get_choice {f : α → α → α} (h : ∀ a b, f a b = a ∨ f 
 | none     (some b) := or.inr rfl
 | (some a) (some b) := by simpa [lift_or_get] using h a b
 
+lemma attach_of_eq_none {α} : Π (x : option α) (h : x = none), x.attach = sum.inl ⟨ h ⟩
+| none rfl := rfl
+
+lemma attach_of_eq_some {α} : Π (x : option α) (i : α) (h : x = some i), x.attach = sum.inr ⟨i,h⟩
+| (some _) _ rfl := rfl
+
 end option

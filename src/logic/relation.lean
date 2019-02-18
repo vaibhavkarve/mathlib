@@ -226,6 +226,17 @@ begin
     rcases IH with ⟨d, had, hdb⟩, exact ⟨_, had, hdb.tail hbc⟩ }
 end
 
+def accessible (z : α) (ac : acc r z) : acc (trans_gen r) z :=
+acc.rec_on ac (λ x acx ih,
+  acc.intro x (λ y rel,
+    trans_gen.rec_on rel
+      (λ a rya acy ih', ih' _ rya)
+      (λ b c tyb rbc ih' acy acty, acc.inv (acty _ rbc) tyb)
+      acx ih))
+
+lemma wf : well_founded r → well_founded (trans_gen r)
+| ⟨ f ⟩  := ⟨ λ a, accessible _ (f a) ⟩
+
 end trans_gen
 
 section refl_trans_gen
@@ -375,5 +386,18 @@ begin
 end
 
 end eqv_gen
+
+section well_founded
+
+variables (h : well_founded r)
+include h
+lemma ne_of_well_founded (h' : r a b) : a ≠ b :=
+begin
+  intro h'', subst b, revert h',
+  apply well_founded.induction h a, clear a, intros a ih h',
+  apply ih _ h' h'
+end
+
+end well_founded
 
 end relation

@@ -90,4 +90,8 @@ inductive rel (r : α → β → Prop) : option α → option β → Prop
 | some {a b} : r a b → rel (some a) (some b)
 | none {}    : rel none none
 
+def attach : Π x : option α, plift (x = none) ⊕ (Σ' a, x = some a)
+| none := sum.inl ⟨ rfl ⟩
+| (some x) := sum.inr ⟨ _, rfl ⟩
+
 end option

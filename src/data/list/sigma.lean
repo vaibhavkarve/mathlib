@@ -161,6 +161,11 @@ theorem perm_lookup (a : α) {l₁ l₂ : list (sigma β)}
   (nd₁ : l₁.nodupkeys) (nd₂ : l₂.nodupkeys) (p : l₁ ~ l₂) : lookup a l₁ = lookup a l₂ :=
 by ext b; simp [mem_lookup_iff, nd₁, nd₂]; exact mem_of_perm p
 
+lemma mem_lookup_iff_set_mem {t : list (sigma β)} (x : α) (y : β x)
+      (ht : nodupkeys t) :
+  y ∈ t.lookup x ↔ sigma.mk x y ∈ t :=
+⟨ of_mem_lookup, mem_lookup ht ⟩
+
 /- lookup_all -/
 
 /-- `lookup_all a l` is the list of all values in `l` corresponding to the key `a`. -/
