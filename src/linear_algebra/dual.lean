@@ -66,7 +66,18 @@ end
 
 lemma dual_elem_eq_repr (v ∈ B) (w : V) :
   pairing (h.dual_elem v) w = h.repr w v :=
-_
+begin
+  delta pairing dual_elem,
+  erw constr_apply,
+  -- change _ = finsupp.to_fun (((linear_map.to_fun _) ∘
+  --            (linear_map.to_fun (linear_equiv.to_linear_map _)))
+  --            (linear_map.to_fun _ w)) v,
+  -- delta submodule.subtype linear_equiv.to_linear_map cod_restrict
+  --   linear_equiv.symm linear_independent.total_equiv lc.total_on
+  --   linear_equiv.of_bijective lc.supported comp equiv.of_bijective
+  --   lc.total function.comp,
+  -- unfold_projs,
+end
 
 def to_dual : V →ₗ[K] module.dual K V :=
 h.constr $ λ v, h.dual_elem v
