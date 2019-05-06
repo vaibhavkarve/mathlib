@@ -5,6 +5,7 @@
 import tactic.fin_cases
 import data.nat.prime
 import group_theory.perm.sign
+import data.fintype
 import tactic.norm_num
 
 example (f : ℕ → Prop) (p : fin 3) (h0 : f 0) (h1 : f 1) (h2 : f 2) : f p.val :=
@@ -67,7 +68,7 @@ begin
 end
 
 open equiv.perm
-example (x : (Σ (a : fin 4), fin 4)) (h : x ∈ fin_pairs_lt 4) : x.1.val < 4 :=
+def foo (x : (Σ (a : fin 4), fin 4)) (h : x ∈ fin_pairs_lt 4) : x.1.val < 4 :=
 begin
   fin_cases h; simp,
   any_goals { exact dec_trivial },
