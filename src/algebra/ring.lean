@@ -5,8 +5,8 @@ Authors: Jeremy Avigad, Leonardo de Moura, Floris van Doorn
 -/
 import algebra.group
 
-universes u v
-variable {α : Type u}
+universes u v w
+variables {α : Type u} {β : Type v} {γ : Type w}
 
 section
 variable [semiring α]
@@ -73,33 +73,80 @@ instance [semiring α] : semiring (with_zero α) :=
 attribute [refl] dvd_refl
 attribute [trans] dvd.trans
 
-class is_semiring_hom {α : Type u} {β : Type v} [semiring α] [semiring β] (f : α → β) : Prop :=
+class is_ring_hom {α : Type u} {β : Type v} [semiring α] [semiring β] (f : α → β) : Prop :=
 (map_zero : f 0 = 0)
 (map_one : f 1 = 1)
 (map_add : ∀ {x y}, f (x + y) = f x + f y)
 (map_mul : ∀ {x y}, f (x * y) = f x * f y)
 
-namespace is_semiring_hom
+namespace is_ring_hom
 
-variables {β : Type v} [semiring α] [semiring β]
-variables (f : α → β) [is_semiring_hom f] {x y : α}
+variables [semiring α] [semiring β]
+variables (f : α → β) [is_ring_hom f] {x y : α}
 
-instance id : is_semiring_hom (@id α) := by refine {..}; intros; refl
+instance id : is_ring_hom (@id α) := by refine {..}; intros; refl
 
-instance comp {γ} [semiring γ] (g : β → γ) [is_semiring_hom g] :
-  is_semiring_hom (g ∘ f) :=
+instance comp {γ} [semiring γ] (g : β → γ) [is_ring_hom g] :
+  is_ring_hom (g ∘ f) :=
 { map_zero := by simp [map_zero f]; exact map_zero g,
   map_one := by simp [map_one f]; exact map_one g,
   map_add := λ x y, by simp [map_add f]; rw map_add g; refl,
   map_mul := λ x y, by simp [map_mul f]; rw map_mul g; refl }
 
 instance : is_add_monoid_hom f :=
-{ ..‹is_semiring_hom f› }
+{ ..‹is_ring_hom f› }
 
 instance : is_monoid_hom f :=
-{ ..‹is_semiring_hom f› }
+{ ..‹is_ring_hom f› }
 
-end is_semiring_hom
+end is_ring_hom
+
+set_option old_structure_cmd true
+
+structure ring_hom (α β : Type*) [semiring α] [semiring β]
+  extends monoid_hom α β, add_monoid_hom α β
+
+infixr ` →r `:25 := ring_hom
+
+namespace ring_hom
+
+section semiring
+variables [semiring α] [semiring β] [semiring γ] (f : α →r β)
+
+instance has_coe_to_add_monoid_hom : has_coe (α →r β) (α →0+ β) := ⟨ring_hom.to_add_monoid_hom⟩
+instance has_coe_to_monoid_hom : has_coe (α →r β) (α →1* β) := ⟨ring_hom.to_monoid_hom⟩
+instance : has_coe_to_fun (α →r β) := ⟨_, to_fun⟩
+
+@[simp] lemma coe_coe_add (a : α) : (f : α →0+ β) a = f a := rfl
+@[simp] lemma coe_coe_mul (a : α): (f : α →1* β) a = f a := rfl
+@[simp] lemma map_one : f 1 = 1 := monoid_hom.map_one (f : α →1* β)
+@[simp] lemma map_zero : f 0 = 0 := add_monoid_hom.map_zero (f : α →0+ β)
+@[simp] lemma map_add : ∀ a b, f (a + b) = f a + f b := add_monoid_hom.map_add (f : α →0+ β)
+@[simp] lemma map_mul : ∀ a b, f (a * b) = f a * f b := monoid_hom.map_mul (f : α →1* β)
+
+def id : α →r α := by refine_struct {to_fun := id}; intros; refl
+
+@[simp] lemma id_apply (a : α) : (id : α →r α) a = a := rfl
+
+def comp (f : β →r γ) (g : α →r β) : α →r γ :=
+by refine_struct {to_fun := λ x, f (g x)}; simp
+
+lemma comp_apply (f : β →r γ) (g : α →r β) (a : α) : (f.comp g) a = f (g a) := rfl
+
+@[simp] lemma id_comp : (id : β →r β).comp f = f := by cases f; refl
+@[simp] lemma comp_id : f.comp id = f := by cases f; refl
+
+end semiring
+
+section ring
+variables [ring α] [ring β] (f : α →r β)
+
+@[simp] lemma map_neg : ∀ a, f (-a) = -f a := add_monoid_hom.map_neg (f : α →0+ β)
+@[simp] lemma map_sub : ∀ a b, f (a - b) = f a - f b := by simp
+
+end ring
+
+end ring_hom
 
 section
   variables [ring α] (a b c d e : α)
@@ -153,22 +200,11 @@ section comm_ring
 
 end comm_ring
 
-class is_ring_hom {α : Type u} {β : Type v} [ring α] [ring β] (f : α → β) : Prop :=
-(map_one : f 1 = 1)
-(map_mul : ∀ {x y}, f (x * y) = f x * f y)
-(map_add : ∀ {x y}, f (x + y) = f x + f y)
-
 namespace is_ring_hom
 
-variables {β : Type v} [ring α] [ring β]
-
-def of_semiring (f : α → β) [H : is_semiring_hom f] : is_ring_hom f := {..H}
+variables [ring α] [ring β]
 
 variables (f : α → β) [is_ring_hom f] {x y : α}
-
-lemma map_zero : f 0 = 0 :=
-calc f 0 = f (0 + 0) - f 0 : by rw [map_add f]; simp
-     ... = 0 : by simp
 
 lemma map_neg : f (-x) = -f x :=
 calc f (-x) = f (-x + x) - f x : by rw [map_add f]; simp
@@ -176,20 +212,6 @@ calc f (-x) = f (-x + x) - f x : by rw [map_add f]; simp
 
 lemma map_sub : f (x - y) = f x - f y :=
 by simp [map_add f, map_neg f]
-
-instance id : is_ring_hom (@id α) := by refine {..}; intros; refl
-
-instance comp {γ} [ring γ] (g : β → γ) [is_ring_hom g] :
-  is_ring_hom (g ∘ f) :=
-{ map_add := λ x y, by simp [map_add f]; rw map_add g; refl,
-  map_mul := λ x y, by simp [map_mul f]; rw map_mul g; refl,
-  map_one := by simp [map_one f]; exact map_one g }
-
-instance : is_semiring_hom f :=
-{ map_zero := map_zero f, ..‹is_ring_hom f› }
-
-instance : is_add_group_hom f :=
-⟨λ _ _, map_add f⟩
 
 end is_ring_hom
 

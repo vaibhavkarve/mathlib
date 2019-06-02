@@ -54,7 +54,7 @@ eq_sub_of_add_eq $ by rw [← cast_add, nat.sub_add_cancel h]
 | (n+1) := (cast_add _ _).trans $
 show ((m * n : ℕ) : α) + m = m * (n + 1), by rw [cast_mul n, left_distrib, mul_one]
 
-instance [semiring α] : is_semiring_hom (coe : ℕ → α) :=
+instance [semiring α] : is_ring_hom (coe : ℕ → α) :=
 by refine_struct {..}; simp
 
 theorem mul_cast_comm [semiring α] (a : α) (n : ℕ) : a * n = n * a :=

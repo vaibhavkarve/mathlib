@@ -27,26 +27,32 @@ instance {S : set R} [is_subring S] : is_ring_hom (@subtype.val R S) :=
 by refine {..} ; intros ; refl
 
 instance is_subring_preimage {R : Type u} {S : Type v} [ring R] [ring S]
-  (f : R → S) [is_ring_hom f] (s : set S) [is_subring s] : is_subring (f ⁻¹' s) := {}
+  (f : R →r S) (s : set S) [is_subring s] : is_subring (f ⁻¹' s) :=
+{ ..is_add_group_hom.preimage f.to_add_monoid_hom _,
+  ..preimage.is_submonoid f.to_monoid_hom _ }
 
 instance is_subring_image {R : Type u} {S : Type v} [ring R] [ring S]
-  (f : R → S) [is_ring_hom f] (s : set R) [is_subring s] : is_subring (f '' s) := {}
+  (f : R →r S) (s : set R) [is_subring s] : is_subring (f '' s) :=
+{ ..is_add_group_hom.image_add_subgroup f.to_add_monoid_hom _,
+  ..image.is_submonoid f.to_monoid_hom _ }
 
 instance is_subring_set_range {R : Type u} {S : Type v} [ring R] [ring S]
-  (f : R → S) [is_ring_hom f] : is_subring (set.range f) := {}
+  (f : R →r S) : is_subring (set.range f) :=
+{ ..is_add_group_hom.range_add_subgroup f.to_add_monoid_hom,
+  ..range.is_submonoid f.to_monoid_hom }
 
 end is_ring_hom
 
 instance subtype_val.is_ring_hom {s : set R} [is_subring s] :
   is_ring_hom (subtype.val : s → R) :=
-{ ..subtype_val.is_add_group_hom, ..subtype_val.is_monoid_hom }
+{ ..subtype_val.is_add_monoid_hom, ..subtype_val.is_monoid_hom }
 
 instance coe.is_ring_hom {s : set R} [is_subring s] : is_ring_hom (coe : s → R) :=
 subtype_val.is_ring_hom
 
 instance subtype_mk.is_ring_hom {γ : Type*} [ring γ] {s : set R} [is_subring s] (f : γ → R)
   [is_ring_hom f] (h : ∀ x, f x ∈ s) : is_ring_hom (λ x, (⟨f x, h x⟩ : s)) :=
-{ ..subtype_mk.is_add_group_hom f h, ..subtype_mk.is_monoid_hom f h }
+{ ..subtype_mk.is_add_monoid_hom f h, ..subtype_mk.is_monoid_hom f h }
 
 instance set_inclusion.is_ring_hom {s t : set R} [is_subring s] [is_subring t] (h : s ⊆ t) :
   is_ring_hom (set.inclusion h) :=

@@ -124,25 +124,25 @@ by induction n; simp [*, pow_succ]
 
 end monoid
 
-namespace is_monoid_hom
-variables {β : Type v} [monoid α] [monoid β] (f : α → β) [is_monoid_hom f]
+namespace monoid_hom
+variables {β : Type v} [monoid α] [monoid β] (f : α →1* β)
 
 theorem map_pow (a : α) : ∀(n : ℕ), f (a ^ n) = (f a) ^ n
 | 0            := is_monoid_hom.map_one f
 | (nat.succ n) := by rw [pow_succ, is_monoid_hom.map_mul f, map_pow n]; refl
 
-end is_monoid_hom
+end monoid_hom
 
-namespace is_add_monoid_hom
-variables {β : Type*} [add_monoid α] [add_monoid β] (f : α → β) [is_add_monoid_hom f]
+namespace add_monoid_hom
+variables {β : Type*} [add_monoid α] [add_monoid β] (f : α →0+ β)
 
 theorem map_smul (a : α) : ∀(n : ℕ), f (n • a) = n • (f a)
 | 0            := is_add_monoid_hom.map_zero f
 | (nat.succ n) := by rw [succ_smul, is_add_monoid_hom.map_add f, map_smul n]; refl
 
-end is_add_monoid_hom
+end add_monoid_hom
 
-attribute [to_additive is_add_monoid_hom.map_smul] is_monoid_hom.map_pow
+attribute [to_additive add_monoid_hom.map_smul] monoid_hom.map_pow
 
 @[simp] theorem nat.pow_eq_pow (p q : ℕ) :
   @has_pow.pow _ _ monoid.has_pow p q = p ^ q :=
@@ -351,26 +351,21 @@ attribute [to_additive gsmul_neg] gpow_neg
 
 end group
 
-namespace is_group_hom
-variables {β : Type v} [group α] [group β] (f : α → β) [is_group_hom f]
-
-theorem map_pow (a : α) (n : ℕ) : f (a ^ n) = f a ^ n :=
-is_monoid_hom.map_pow f a n
+namespace monoid_hom
+variables {β : Type v} [group α] [group β] (f : α →1* β)
 
 theorem map_gpow (a : α) (n : ℤ) : f (a ^ n) = f a ^ n :=
-by cases n; [exact is_group_hom.map_pow f _ _,
-  exact (is_group_hom.map_inv f _).trans (congr_arg _ $ is_group_hom.map_pow f _ _)]
+by cases n; [exact f.map_pow _ _,
+  exact (f.map_inv _).trans (congr_arg _ $ f.map_pow _ _)]
 
-end is_group_hom
+end monoid_hom
 
 namespace is_add_group_hom
-variables {β : Type v} [add_group α] [add_group β] (f : α → β) [is_add_group_hom f]
-
-theorem map_smul (a : α) (n : ℕ) : f (n • a) = n • f a :=
-is_add_monoid_hom.map_smul f a n
+variables {β : Type v} [add_group α] [add_group β] (f : α →0+ β)
 
 theorem map_gsmul (a : α) (n : ℤ) : f (gsmul n a) = gsmul n (f a) :=
-@is_group_hom.map_gpow (multiplicative α) (multiplicative β) _ _ f _ a n
+by cases n; [exact f.map_smul _ _,
+  exact (f.map_neg _).trans (congr_arg _ $ f.map_smul _ _)]
 
 end is_add_group_hom
 
@@ -389,25 +384,15 @@ attribute [to_additive gsmul_add] mul_gpow
 theorem gsmul_sub : ∀ (a b : β) (n : ℤ), gsmul n (a - b) = gsmul n a - gsmul n b :=
 by simp [gsmul_add, gsmul_neg]
 
-instance gpow.is_group_hom (n : ℤ) : is_group_hom ((^ n) : α → α) :=
-⟨λ _ _, mul_gpow _ _ n⟩
+instance gpow.is_monoid_hom (n : ℤ) : is_monoid_hom ((^ n) : α → α) :=
+{ to_is_mul_hom := ⟨by simp [mul_gpow]⟩, map_one := by simp }
 
-instance gsmul.is_add_group_hom (n : ℤ) : is_add_group_hom (gsmul n : β → β) :=
-⟨λ _ _, gsmul_add _ _ n⟩
+instance gsmul.is_add_monoid_hom (n : ℤ) : is_add_monoid_hom (gsmul n : β → β) :=
+{ to_is_add_hom := ⟨by simp [gsmul_add]⟩, map_zero := by simp }
 
-attribute [to_additive gsmul.is_add_group_hom] gpow.is_group_hom
+attribute [to_additive gsmul.is_add_monoid_hom] gpow.is_monoid_hom
 
 end comm_monoid
-
-section group
-
-@[instance]
-theorem is_add_group_hom.gsmul
-  {α β} [add_group α] [add_comm_group β] (f : α → β) [is_add_group_hom f] (z : ℤ) :
-  is_add_group_hom (λa, gsmul z (f a)) :=
-⟨assume a b, by rw [is_add_group_hom.map_add f, gsmul_add]⟩
-
-end group
 
 @[simp] lemma with_bot.coe_smul [add_monoid α] (a : α) (n : ℕ) :
   ((add_monoid.smul n a : α) : with_bot α) = add_monoid.smul n a :=
@@ -439,9 +424,9 @@ theorem int.nat_abs_pow (n : ℤ) (k : ℕ) : int.nat_abs (n ^ k) = (int.nat_abs
 by induction k with k ih; [refl, rw [pow_succ', int.nat_abs_mul, nat.pow_succ, ih]]
 
 theorem is_semiring_hom.map_pow {β} [semiring α] [semiring β]
-  (f : α → β) [is_semiring_hom f] (x : α) (n : ℕ) : f (x ^ n) = f x ^ n :=
-by induction n with n ih; [exact is_semiring_hom.map_one f,
-  rw [pow_succ, pow_succ, is_semiring_hom.map_mul f, ih]]
+  (f : α →r β) (x : α) (n : ℕ) : f (x ^ n) = f x ^ n :=
+by induction n with n ih; [exact f.map_one,
+  rw [pow_succ, pow_succ, f.map_mul, ih]]
 
 theorem neg_one_pow_eq_or {R} [ring R] : ∀ n : ℕ, (-1 : R)^n = 1 ∨ (-1 : R)^n = -1
 | 0     := or.inl rfl

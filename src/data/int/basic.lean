@@ -1117,7 +1117,7 @@ not_congr cast_eq_zero
 
 instance cast.is_ring_hom [ring α] :
   is_ring_hom (int.cast : ℤ → α) :=
-⟨cast_one, cast_mul, cast_add⟩
+⟨cast_zero, cast_one, cast_add, cast_mul⟩
 
 instance coe.is_ring_hom [ring α] : is_ring_hom (coe : ℤ → α) := cast.is_ring_hom
 
