@@ -42,7 +42,12 @@ instance : has_mem α (chain α) :=
 
 def nth (i : ℕ) (c : chain α) : α := c.elems.nth i
 
+def const (x : α) : chain α := ⟨stream.const x, λ i j h, le_refl _⟩
+
 @[simp] lemma nth_mk (i : ℕ) (s : stream α) (h) : (chain.mk s h).nth i = s.nth i := rfl
+
+@[simp] lemma mem_const (x y : α) : x ∈ const y ↔ x = y :=
+⟨λ ⟨i,h⟩, h, λ h, ⟨0, h⟩⟩
 
 variables (c c' : chain α)
   (f : α → β) (hf : monotone f)
@@ -59,6 +64,8 @@ def map : chain β :=
 ⟨c.elems.map f, stream.monotone_map hf c.mono ⟩
 
 variables {f}
+
+@[simp] lemma map_const (x : α) : (const x).map f hf = const (f x) := rfl
 
 @[simp] lemma elems_map (c : chain α) : (c.map f hf).elems = c.elems.map f := rfl
 
@@ -147,30 +154,78 @@ begin
   apply Sup_le _ _ a,
 end
 
+@[simp] lemma Sup_const (x : α) : Sup (chain.const x) = x :=
+le_antisymm
+  (Sup_le _ _ $ by simp)
+  (le_Sup _ _ $ by simp)
+
 section continuity
 open chain
 
 variables [complete_partial_order β]
           [complete_partial_order γ]
-  (f : α → β) (hf : monotone f)
   (g : β → γ) (hg : monotone g)
+  (f : α → β) (hf : monotone f)
 
 def continuous :=
 ∀ C : chain α, f (Sup C) = Sup (C.map f hf)
 
 def continuous' := ∃ h, continuous f h
 
-lemma continuous_comp (hfc : continuous f hf) (hgc : continuous g hg) :
+lemma continuous_comp (hgc : continuous g hg) (hfc : continuous f hf) :
   continuous (g ∘ f) (monotone_comp hf hg) :=
 begin
   dsimp [continuous] at *, intro,
   rw [hfc,hgc,chain.map_comp]
 end
 
+lemma continuous_id' : continuous' (@id α) :=
+⟨ monotone_id, λ c, show Sup _ = Sup _, from congr_arg _ (map_id c).symm ⟩
+
+lemma continuous_comp' (hg : continuous' g) (hf : continuous' f) : continuous' (g ∘ f) :=
+⟨_, continuous_comp _ _ _ _ hg.snd hf.snd⟩
 
 end continuity
 
 end complete_partial_order
+
+namespace discrete
+
+def partial_order (α) : partial_order α :=
+{ le := eq,
+  le_refl := @rfl _,
+  le_trans := @eq.trans _,
+  le_antisymm := λ x y h _, h }
+
+local attribute [instance, priority 0] discrete.partial_order
+
+def complete_partial_order (α : Type*) : complete_partial_order α :=
+{ Sup := λ c, @chain.nth α _ 0 c,
+  le_Sup := λ c i, Exists.rec $ λ j (hj : i = stream.nth j (c.elems)),
+              show i = chain.nth 0 c, from
+              suffices chain.nth 0 c = stream.nth j (c.elems), from (this.symm ▸ hj),
+              c.mono (nat.zero_le _),
+  Sup_le := λ c x h, h _ ⟨0,rfl⟩ }
+
+open complete_partial_order
+
+lemma monotone_of {α β} (f : α → β) : monotone f :=
+λ a b h, congr_arg _ h
+
+local attribute [instance, priority 0] discrete.complete_partial_order
+
+lemma const_chain_rec {α} (β : chain α → Sort*) (h : Π x, β (chain.const x)) : Π c, β c :=
+λ c, eq.mp
+  (congr_arg _ $ chain.ext _ _ $
+    λ i, show chain.nth i (chain.const (chain.nth 0 c)) = chain.nth i c, from
+         suffices chain.nth 0 c = chain.nth i c, by simpa,
+         c.mono (zero_le _))
+  (h $ c.nth 0)
+
+lemma continuous_of {α β} (f : α → β) : continuous' f :=
+⟨monotone_of f, const_chain_rec _ $ by simp⟩
+
+end discrete
 
 namespace roption
 

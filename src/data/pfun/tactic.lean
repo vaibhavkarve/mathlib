@@ -1,4 +1,5 @@
 import data.pfun.fix
+import category.bitraversable.instances
 
 variables {α : Type*} {β : Type*} {γ : Type*} {φ : Type*}
 
@@ -153,7 +154,7 @@ do `(continuous' %%f) ← target,
    iterate_exactly' arity $
      applyc ``pi.continuous_ext >> intro1
 
-meta def continuity_step' : tactic unit :=
+meta def continuity_step : tactic unit :=
 do continuity_ext,
    e@`(continuous' %%f) ← target,
    (lam n bi d b) ← pure f,
@@ -179,14 +180,16 @@ do continuity_ext,
      fail format!"unsupported {f}"
    end
 
-meta def interactive.show_continuity' : tactic unit :=
+meta def show_continuity : tactic unit :=
 focus1 $
 do `(continuous' %%f) ← target,
    vs ← continuity_ext,
    dunfold_target [f.get_app_fn.const_name] <|>
      (() <$ cases vs.head; dunfold_target [f.get_app_fn.const_name]),
-   all_goals $ repeat continuity_step',
+   all_goals $ repeat continuity_step,
    skip
+
+run_cmd add_interactive [``continuity_step,``show_continuity]
 
 open interactive expr
 
@@ -268,7 +271,7 @@ meta def partial_attr : user_attribute :=
               { pr ← mk_meta_var cont_t,
                 set_goals [pr],
                 intron vs.length,
-                interactive.show_continuity',
+                show_continuity,
                 pr ← instantiate_mvars pr,
                 pure pr },
             add_decl $ declaration.thm cont_n ls cont_t pr },

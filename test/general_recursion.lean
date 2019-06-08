@@ -4,8 +4,6 @@ import tactic.omega
 import data.pfun.tactic
 import data.nat.basic
 
-universes u_1 u_2
-
 namespace roption.examples
 open function has_fix complete_partial_order
 
@@ -39,10 +37,10 @@ do tt₀ ← tree_map t₀,
    tt₁ ← tree_map t₁,
    pure $ node (f x) tt₀ tt₁
 
-example : ∀ {α : Type u_1} {β : Type u_2} (f : α → β), tree_map f nil = pure nil :=
+example : ∀ {α : Type*} {β : Type*} (f : α → β), tree_map f nil = pure nil :=
 @roption.examples.tree_map.equations._eqn_1
 
-example : ∀ {α : Type u_1} {β : Type u_2} (f : α → β) (x : α) (t₀ t₁ : tree α),
+example : ∀ {α : Type*} {β : Type*} (f : α → β) (x : α) (t₀ t₁ : tree α),
   tree_map f (node x t₀ t₁) =
     tree_map f t₀ >>= λ (tt₀ : tree β), tree_map f t₁ >>= λ (tt₁ : tree β), pure (node (f x) tt₀ tt₁) :=
 @roption.examples.tree_map.equations._eqn_2
@@ -53,10 +51,10 @@ def tree_map'.intl {α β} (f : α → β) (tree_map : tree α → roption (tree
 | (node x t₀ t₁) :=
 node (f x) <$> tree_map t₀ <*> tree_map t₁
 
-example : ∀ {α : Type u_1} {β : Type u_2} (f : α → β), tree_map' f nil = pure nil :=
+example : ∀ {α : Type*} {β : Type*} (f : α → β), tree_map' f nil = pure nil :=
 @roption.examples.tree_map'.equations._eqn_1
 
-example : ∀ {α : Type u_1} {β : Type u_2} (f : α → β) (x : α) (t₀ t₁ : tree α),
+example : ∀ {α : Type*} {β : Type*} (f : α → β) (x : α) (t₀ t₁ : tree α),
   tree_map' f (node x t₀ t₁) = node (f x) <$> tree_map' f t₀ <*> tree_map' f t₁ :=
 @roption.examples.tree_map'.equations._eqn_2
 
