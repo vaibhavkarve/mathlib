@@ -6,7 +6,7 @@ open nat
 def M (p : ℕ) : ℕ := 2^p  - 1
 def s (p : ℕ) : ℕ → ℕ
 | 0 := 4
-| (i+1) := ((s i)^2 - 2) % (2^p - 1)
+| (i+1) := ((s i)^2 - 2) % (M p)
 
 
 def Lucas_Lehmer_residue (p : ℕ) := s p (p-2)
@@ -40,7 +40,7 @@ lemma s_succ {p a i b c}
   (h2 : s p i = b)
   (h3 : (b * b - 2) % a = c) :
   s p (i+1) = c :=
-by rw [s, h1, h2, nat.pow_two, h3]
+by { dsimp [s, M], rw [h1, h2, nat.pow_two, h3] }
 
 meta def run_Lucas_Lehmer_test : tactic unit :=
 do `(Lucas_Lehmer_test %%p) ← target,
