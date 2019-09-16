@@ -45,6 +45,10 @@ def functor_to_core (F : G ⥤ C) : G ⥤ core C :=
   map := λ X Y f, ⟨F.map f, F.map (inv f)⟩ }
 
 def forget_functor_to_core : (G ⥤ core C) ⥤ (G ⥤ C) := (whiskering_right _ _ _).obj inclusion
+
+lemma functor_to_core_forget (F : G ⥤ C) : forget_functor_to_core.obj (functor_to_core F) = F :=
+by rcases F; refl
+
 end core
 
 end category_theory
