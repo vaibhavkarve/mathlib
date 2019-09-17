@@ -9,7 +9,7 @@ universes u v w
 variables {α : Sort u} {β : Sort v} {γ : Sort w}
 
 structure unique (α : Sort u) extends inhabited α :=
-(uniq : ∀ a:α, a = default)
+(uniq : ∀ a:α, a = _root_.default α)
 
 attribute [class] unique
 
