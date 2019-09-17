@@ -401,6 +401,19 @@ by rw [inter_comm, singleton_inter_of_mem h]
 @[simp] theorem inter_singleton_of_not_mem {a : α} {s : finset α} (h : a ∉ s) : s ∩ ι a = ∅ :=
 by rw [inter_comm, singleton_inter_of_not_mem h]
 
+lemma inter_subset_inter {x y s t : finset α} (h : x ⊆ y) (h' : s ⊆ t) : x ∩ s ⊆ y ∩ t :=
+begin
+  intros a a_in,
+  rw finset.mem_inter at a_in ⊢,
+  exact ⟨h a_in.1, h' a_in.2⟩
+end
+
+lemma inter_subset_inter_right {x y s : finset α} (h : x ⊆ y) : x ∩ s ⊆ y ∩ s :=
+finset.inter_subset_inter h (finset.subset.refl _)
+
+lemma inter_subset_inter_left {x y s : finset α} (h : x ⊆ y) : s ∩ x ⊆ s ∩ y :=
+finset.inter_subset_inter (finset.subset.refl _) h
+
 /- lattice laws -/
 
 instance : lattice (finset α) :=
@@ -508,6 +521,9 @@ ext.2 $ λ a, by simpa only [mem_sdiff, mem_union, or_comm,
 @[simp] theorem union_sdiff_of_subset {s₁ s₂ : finset α} (h : s₁ ⊆ s₂) : s₁ ∪ (s₂ \ s₁) = s₂ :=
 (union_comm _ _).trans (sdiff_union_of_subset h)
 
+theorem inter_sdiff (s t u : finset α) : s ∩ (t \ u) = s ∩ t \ u :=
+by { ext x, simp [and_assoc] }
+
 @[simp] theorem inter_sdiff_self (s₁ s₂ : finset α) : s₁ ∩ (s₂ \ s₁) = ∅ :=
 eq_empty_of_forall_not_mem $
 by simp only [mem_inter, mem_sdiff]; rintro x ⟨h, _, hn⟩; exact hn h
@@ -598,6 +614,19 @@ ext.2 $ λ _, by simp only [mem_filter, mem_union, or_and_distrib_right]
 theorem filter_union_right (p q : α → Prop) [decidable_pred p] [decidable_pred q] (s : finset α) :
   s.filter p ∪ s.filter q = s.filter (λx, p x ∨ q x) :=
 ext.2 $ λ x, by simp only [mem_filter, mem_union, and_or_distrib_left.symm]
+
+theorem filter_inter {s t : finset α} : filter p s ∩ t = filter p (s ∩ t) :=
+by {ext, simp [and_assoc], rw [and.left_comm] }
+
+theorem inter_filter {s t : finset α} : s ∩ filter p t = filter p (s ∩ t) :=
+by rw [inter_comm, filter_inter, inter_comm]
+
+theorem filter_insert (a : α) (s : finset α) :
+  filter p (insert a s) = if p a then insert a (filter p s) else (filter p s) :=
+by { ext x, simp, split_ifs with h; by_cases h' : x = a; simp [h, h'] }
+
+theorem filter_singleton (a : α) : filter p (singleton a) = if p a then singleton a else ∅ :=
+by { ext x, simp, split_ifs with h; by_cases h' : x = a; simp [h, h'] }
 
 theorem filter_or (s : finset α) : s.filter (λ a, p a ∨ q a) = s.filter p ∪ s.filter q :=
 ext.2 $ λ _, by simp only [mem_filter, mem_union, and_or_distrib_left]
@@ -1023,7 +1052,7 @@ lemma card_eq_succ [decidable_eq α] {s : finset α} {n : ℕ} :
   s.card = n + 1 ↔ (∃a t, a ∉ t ∧ insert a t = s ∧ card t = n) :=
 iff.intro
   (assume eq,
-    have card s > 0, from eq.symm ▸ nat.zero_lt_succ _,
+    have 0 < card s, from eq.symm ▸ nat.zero_lt_succ _,
     let ⟨a, has⟩ := finset.exists_mem_of_ne_empty $ card_pos.mp this in
     ⟨a, s.erase a, s.not_mem_erase a, insert_erase has, by simp only [eq, card_erase_of_mem has, pred_succ]⟩)
   (assume ⟨a, t, hat, s_eq, n_eq⟩, s_eq ▸ n_eq ▸ card_insert_of_not_mem hat)
@@ -1123,6 +1152,14 @@ ext.2 $ λ x, by simp only [mem_bind, exists_prop, mem_union, mem_insert,
 
 @[simp] lemma singleton_bind [decidable_eq α] {a : α} : (singleton a).bind t = t a :=
 show (insert a ∅ : finset α).bind t = t a, from bind_insert.trans $ union_empty _
+
+theorem bind_inter (s : finset α) (f : α → finset β) (t : finset β) :
+  s.bind f ∩ t = s.bind (λ x, f x ∩ t) :=
+by { ext x, simp, exact ⟨λ ⟨xt, y, ys, xf⟩, ⟨y, ys, xt, xf⟩, λ ⟨y, ys, xt, xf⟩, ⟨xt, y, ys, xf⟩⟩ }
+
+theorem inter_bind (t : finset β) (s : finset α) (f : α → finset β) :
+  t ∩ s.bind f = s.bind (λ x, t ∩ f x) :=
+by rw [inter_comm, bind_inter]; simp
 
 theorem image_bind [decidable_eq γ] {f : α → β} {s : finset α} {t : β → finset γ} :
   (s.image f).bind t = s.bind (λa, t (f a)) :=
@@ -1588,9 +1625,19 @@ finset.induction_on s (λ _ H, by cases H) $
       { exact mem_insert_of_mem (ih h) } }
   end
 
-theorem le_min_of_mem {s : finset α} {a b : α} (h₁ : b ∈ s) (h₂ : a ∈ s.min) : a ≤ b :=
+theorem min_le_of_mem {s : finset α} {a b : α} (h₁ : b ∈ s) (h₂ : a ∈ s.min) : a ≤ b :=
 by rcases @inf_le (with_top α) _ _ _ _ _ h₁ _ rfl with ⟨b', hb, ab⟩;
    cases h₂.symm.trans hb; assumption
+
+lemma exists_min (s : finset β) (f : β → α)
+  (h : nonempty ↥(↑s : set β)) : ∃ x ∈ s, ∀ x' ∈ s, f x ≤ f x' :=
+begin
+  have : s.image f ≠ ∅,
+    rwa [ne, image_eq_empty, ← ne.def, ← nonempty_iff_ne_empty],
+  cases min_of_ne_empty this with y hy,
+  rcases mem_image.mp (mem_of_min hy) with ⟨x, hx, rfl⟩,
+  exact ⟨x, hx, λ x' hx', min_le_of_mem (mem_image_of_mem f hx') hy⟩
+end
 
 end max_min
 
@@ -1761,7 +1808,7 @@ variables (S : finset α) (H : S ≠ ∅)
 
 theorem min'_mem : S.min' H ∈ S := mem_of_min $ by simp [min']
 
-theorem min'_le (x) (H2 : x ∈ S) : S.min' H ≤ x := le_min_of_mem H2 $ option.get_mem _
+theorem min'_le (x) (H2 : x ∈ S) : S.min' H ≤ x := min_le_of_mem H2 $ option.get_mem _
 
 theorem le_min' (x) (H2 : ∀ y ∈ S, x ≤ y) : x ≤ S.min' H := H2 _ $ min'_mem _ _
 
@@ -1856,7 +1903,7 @@ end
 theorem eq_cons {n m : ℕ} (h : n < m) : Ico n m = insert n (Ico (n + 1) m) :=
 by rw [← to_finset, multiset.Ico.eq_cons h, multiset.to_finset_cons, to_finset]
 
-@[simp] theorem pred_singleton {m : ℕ} (h : m > 0) : Ico (m - 1) m = {m - 1} :=
+@[simp] theorem pred_singleton {m : ℕ} (h : 0 < m) : Ico (m - 1) m = {m - 1} :=
 eq_of_veq $ multiset.Ico.pred_singleton h
 
 @[simp] theorem not_mem_top {n m : ℕ} : m ∉ Ico n m :=
@@ -1874,17 +1921,17 @@ eq_of_veq $ multiset.Ico.filter_lt_of_ge hlm
 @[simp] lemma filter_lt (n m l : ℕ) : (Ico n m).filter (λ x, x < l) = Ico n (min m l) :=
 eq_of_veq $ multiset.Ico.filter_lt n m l
 
-lemma filter_ge_of_le_bot {n m l : ℕ} (hln : l ≤ n) : (Ico n m).filter (λ x, x ≥ l) = Ico n m :=
-eq_of_veq $ multiset.Ico.filter_ge_of_le_bot hln
+lemma filter_le_of_le_bot {n m l : ℕ} (hln : l ≤ n) : (Ico n m).filter (λ x, l ≤ x) = Ico n m :=
+eq_of_veq $ multiset.Ico.filter_le_of_le_bot hln
 
-lemma filter_ge_of_top_le {n m l : ℕ} (hml : m ≤ l) : (Ico n m).filter (λ x, x ≥ l) = ∅ :=
-eq_of_veq $ multiset.Ico.filter_ge_of_top_le hml
+lemma filter_le_of_top_le {n m l : ℕ} (hml : m ≤ l) : (Ico n m).filter (λ x, l ≤ x) = ∅ :=
+eq_of_veq $ multiset.Ico.filter_le_of_top_le hml
 
-lemma filter_ge_of_ge {n m l : ℕ} (hnl : n ≤ l) : (Ico n m).filter (λ x, x ≥ l) = Ico l m :=
-eq_of_veq $ multiset.Ico.filter_ge_of_ge hnl
+lemma filter_le_of_le {n m l : ℕ} (hnl : n ≤ l) : (Ico n m).filter (λ x, l ≤ x) = Ico l m :=
+eq_of_veq $ multiset.Ico.filter_le_of_le hnl
 
-@[simp] lemma filter_ge (n m l : ℕ) : (Ico n m).filter (λ x, x ≥ l) = Ico (max n l) m :=
-eq_of_veq $ multiset.Ico.filter_ge n m l
+@[simp] lemma filter_le (n m l : ℕ) : (Ico n m).filter (λ x, l ≤ x) = Ico (max n l) m :=
+eq_of_veq $ multiset.Ico.filter_le n m l
 
 @[simp] lemma diff_left (l n m : ℕ) : (Ico n m) \ (Ico n l) = Ico (max n l) m :=
 by ext k; by_cases n ≤ k; simp [h, and_comm]
@@ -1950,3 +1997,29 @@ lemma Inter_eq_Inter_finset (s : ι → set α) :
 lattice.infi_eq_infi_finset s
 
 end set
+
+namespace finset
+
+namespace nat
+
+/-- The antidiagonal of a natural number `n` is
+    the finset of pairs `(i,j)` such that `i+j = n`. -/
+def antidiagonal (n : ℕ) : finset (ℕ × ℕ) :=
+(multiset.nat.antidiagonal n).to_finset
+
+/-- A pair (i,j) is contained in the antidiagonal of `n` if and only if `i+j=n`. -/
+@[simp] lemma mem_antidiagonal {n : ℕ} {x : ℕ × ℕ} :
+  x ∈ antidiagonal n ↔ x.1 + x.2 = n :=
+by rw [antidiagonal, multiset.mem_to_finset, multiset.nat.mem_antidiagonal]
+
+/-- The cardinality of the antidiagonal of `n` is `n+1`. -/
+@[simp] lemma card_antidiagonal (n : ℕ) : (antidiagonal n).card = n+1 :=
+by simpa using list.to_finset_card_of_nodup (list.nat.nodup_antidiagonal n)
+
+/-- The antidiagonal of `0` is the list `[(0,0)]` -/
+@[simp] lemma antidiagonal_zero : antidiagonal 0 = {(0, 0)} :=
+by { rw [antidiagonal, multiset.nat.antidiagonal_zero], refl }
+
+end nat
+
+end finset

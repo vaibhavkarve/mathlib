@@ -17,9 +17,7 @@ import topology.uniform_space.uniform_embedding topology.uniform_space.complete_
 import topology.algebra.group
 
 noncomputable theory
-local attribute [instance, priority 0] classical.prop_decidable
-
-local notation `𝓤` := uniformity
+open_locale classical uniformity
 
 section uniform_add_group
 open filter set
@@ -63,6 +61,7 @@ by simp * at *
 lemma uniform_continuous_add' : uniform_continuous (λp:α×α, p.1 + p.2) :=
 uniform_continuous_add uniform_continuous_fst uniform_continuous_snd
 
+@[priority 0]
 instance uniform_add_group.to_topological_add_group : topological_add_group α :=
 { continuous_add := uniform_continuous_add'.continuous,
   continuous_neg := uniform_continuous_neg'.continuous }
@@ -237,7 +236,7 @@ variables (f : α × β → γ) [is_Z_bilin f]
 
 instance is_Z_bilin.comp_hom {g : γ → δ} [add_comm_group δ] [is_add_group_hom g] :
   is_Z_bilin (g ∘ f) :=
-by constructor; simp [(∘), is_Z_bilin.add_left f, is_Z_bilin.add_right f, is_add_group_hom.map_add g]
+by constructor; simp [(∘), is_Z_bilin.add_left f, is_Z_bilin.add_right f, is_add_hom.map_add g]
 
 instance is_Z_bilin.comp_swap : is_Z_bilin (f ∘ prod.swap) :=
 ⟨λ a a' b, is_Z_bilin.add_right f b a a',
@@ -284,11 +283,10 @@ open add_comm_group filter set function
 section
 variables {α : Type*} {β : Type*} {γ : Type*} {δ : Type*}
 
--- α, β and G are abelian topological groups, G is complete Hausdorff
-variables [topological_space α] [add_comm_group α] [topological_add_group α]
-variables [topological_space β] [add_comm_group β] [topological_add_group β]
-variables {G : Type*} [uniform_space G] [add_comm_group G] [uniform_add_group G]
-  [complete_space G] [separated G]
+-- α, β and G are abelian topological groups, G is a uniform space
+variables [topological_space α] [add_comm_group α]
+variables [topological_space β] [add_comm_group β]
+variables {G : Type*} [uniform_space G] [add_comm_group G]
 
 variables {ψ : α × β → G} (hψ : continuous ψ) [ψbilin : is_Z_bilin ψ]
 
@@ -312,7 +310,7 @@ variables {α : Type*} {β : Type*}
 variables [topological_space α] [add_comm_group α] [topological_add_group α]
 
 -- β is a dense subgroup of α, inclusion is denoted by e
-variables [topological_space β] [add_comm_group β] [topological_add_group β]
+variables [topological_space β] [add_comm_group β]
 variables {e : β → α} [is_add_group_hom e] (de : dense_inducing e)
 include de
 

@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Author: Leonardo de Moura, Jeremy Avigad
 -/
 
+prefix `!`:90 := bnot
+
 namespace bool
 
 @[simp] theorem coe_sort_tt : coe_sort.{1 1} tt = true := eq_true_intro rfl
@@ -114,5 +116,7 @@ theorem eq_ff_of_bnot_eq_tt : ∀ {a : bool}, bnot a = tt → a = ff := dec_triv
 @[simp] theorem bxor_assoc : ∀ a b c, bxor (bxor a b) c = bxor a (bxor b c) := dec_trivial
 
 @[simp] theorem bxor_left_comm : ∀ a b c, bxor a (bxor b c) = bxor b (bxor a c) := dec_trivial
+
+lemma bxor_iff_ne : ∀ {x y : bool}, bxor x y = tt ↔ x ≠ y := dec_trivial
 
 end bool

@@ -60,48 +60,22 @@ instance : uniform_add_group (completion α) :=
                               (uniform_continuous_map.comp uniform_continuous_snd)) : _)⟩
 
 instance is_add_group_hom_coe : is_add_group_hom (coe : α → completion α) :=
-⟨ coe_add ⟩
+{ map_add := coe_add }
 
 variables {β : Type*} [uniform_space β] [add_group β] [uniform_add_group β]
 
 lemma is_add_group_hom_extension  [complete_space β] [separated β]
   {f : α → β} [is_add_group_hom f] (hf : continuous f) : is_add_group_hom (completion.extension f) :=
 have hf : uniform_continuous f, from uniform_continuous_of_continuous hf,
-⟨assume a b, completion.induction_on₂ a b
+{ map_add := assume a b, completion.induction_on₂ a b
   (is_closed_eq
     (continuous_extension.comp continuous_add')
     (continuous_add (continuous_extension.comp continuous_fst) (continuous_extension.comp continuous_snd)))
-  (assume a b, by rw_mod_cast [extension_coe hf, extension_coe hf, extension_coe hf, is_add_group_hom.map_add f])⟩
+  (assume a b, by rw_mod_cast [extension_coe hf, extension_coe hf, extension_coe hf, is_add_hom.map_add f]) }
 
 lemma is_add_group_hom_map [add_group β] [uniform_add_group β]
   {f : α → β} [is_add_group_hom f] (hf : continuous f) : is_add_group_hom (completion.map f) :=
-is_add_group_hom_extension ((continuous_coe _).comp hf)
-
-section instance_max_depth
--- TODO: continuous_add requires some long proofs through
--- uniform_add_group / topological_add_group w.r.t prod / completion etc
-set_option class.instance_max_depth 52
-
-lemma is_add_group_hom_prod [add_group β] [uniform_add_group β] :
-  is_add_group_hom (@completion.prod α β _ _) :=
-⟨assume ⟨a₁, a₂⟩ ⟨b₁, b₂⟩,
-  begin
-    refine completion.induction_on₄ a₁ a₂ b₁ b₂ (is_closed_eq _ _) _,
-    { refine continuous.comp uniform_continuous_prod.continuous _ ,
-      refine continuous_add _ _,
-      exact continuous.prod_mk (continuous_fst.comp continuous_fst) (continuous_snd.comp continuous_fst),
-      exact continuous.prod_mk (continuous_fst.comp continuous_snd) (continuous_snd.comp continuous_snd) },
-    { refine continuous_add _ _,
-      refine continuous.comp uniform_continuous_prod.continuous _,
-      exact continuous.prod_mk (continuous_fst.comp continuous_fst) (continuous_snd.comp continuous_fst),
-      refine continuous.comp uniform_continuous_prod.continuous _,
-      exact continuous.prod_mk (continuous_fst.comp continuous_snd) (continuous_snd.comp continuous_snd) },
-    { assume a b c d,
-      show completion.prod (↑a + ↑c, ↑b + ↑d) = completion.prod (↑a, ↑b) + completion.prod (↑c, ↑d),
-      norm_cast }
-  end⟩
-
-end instance_max_depth
+(is_add_group_hom_extension  ((continuous_coe _).comp hf) : _)
 
 instance {α : Type*} [uniform_space α] [add_comm_group α] [uniform_add_group α] : add_comm_group (completion α) :=
 { add_comm  := assume a b, completion.induction_on₂ a b

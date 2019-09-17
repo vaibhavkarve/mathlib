@@ -18,6 +18,11 @@ maybe it is useful for writing automation.
 
 section miscellany
 
+/- We add the `inline` attribute to optimize VM computation using these declarations. For example,
+  `if p ∧ q then ... else ...` will not evaluate the decidability of `q` if `p` is false. -/
+attribute [inline] and.decidable or.decidable decidable.false xor.decidable iff.decidable
+  decidable.true implies.decidable not.decidable ne.decidable
+
 variables {α : Type*} {β : Type*}
 
 @[reducible] def hidden {a : α} := a
@@ -74,6 +79,16 @@ assume ⟨h⟩, h.elim
 -- missing [symm] attribute for ne in core.
 attribute [symm] ne.symm
 
+lemma ne_comm {α} {a b : α} : a ≠ b ↔ b ≠ a := ⟨ne.symm, ne.symm⟩
+
+@[simp] lemma eq_iff_eq_cancel_left {b c : α} :
+  (∀ {a}, a = b ↔ a = c) ↔ (b = c) :=
+⟨λ h, by rw [← h], λ h a, by rw h⟩
+
+@[simp] lemma eq_iff_eq_cancel_right {a b : α} :
+  (∀ {c}, a = c ↔ b = c) ↔ (a = b) :=
+⟨λ h, by rw h, λ h a, by rw h⟩
+
 end miscellany
 
 /-
@@ -91,6 +106,8 @@ variables {a b c d : Prop}
 theorem iff_of_eq (e : a = b) : a ↔ b := e ▸ iff.rfl
 
 theorem iff_iff_eq : (a ↔ b) ↔ a = b := ⟨propext, iff_of_eq⟩
+
+@[simp] lemma eq_iff_iff {p q : Prop} : (p = q) ↔ (p ↔ q) := iff_iff_eq.symm
 
 @[simp] theorem imp_self : (a → a) ↔ true := iff_true_intro id
 
@@ -289,7 +306,7 @@ by rw [@iff_def (¬ a), @iff_def' a]; exact and_congr not_imp_not not_imp_not
 theorem not_iff_comm [decidable a] [decidable b] : (¬ a ↔ b) ↔ (¬ b ↔ a) :=
 by rw [@iff_def (¬ a), @iff_def (¬ b)]; exact and_congr not_imp_comm imp_not_comm
 
-theorem not_iff [decidable a] [decidable b] : ¬ (a ↔ b) ↔ (¬ a ↔ b) :=
+theorem not_iff [decidable b] : ¬ (a ↔ b) ↔ (¬ a ↔ b) :=
 by split; intro h; [split, skip]; intro h'; [by_contradiction,intro,skip];
    try { refine h _; simp [*] }; rw [h',not_iff_self] at h; exact h
 
@@ -376,6 +393,9 @@ protected lemma eq.congr {x₁ x₂ y₁ y₂ : α} (h₁ : x₁ = y₁) (h₂ :
   (x₁ = x₂) ↔ (y₁ = y₂) :=
 by { subst h₁, subst h₂ }
 
+lemma eq.congr_left {x y z : α} (h : x = y) : x = z ↔ y = z := by rw [h]
+lemma eq.congr_right {x y z : α} (h : x = y) : z = x ↔ z = y := by rw [h]
+
 lemma congr_arg2 {α β γ : Type*} (f : α → β → γ) {x x' : α} {y y' : β}
   (hx : x = x') (hy : y = y') : f x y = f x' y' :=
 by { subst hx, subst hy }
@@ -387,14 +407,17 @@ end equality
 -/
 
 section quantifiers
-variables {α : Sort*} {p q : α → Prop} {b : Prop}
+variables {α : Sort*} {β : Sort*} {p q : α → Prop} {b : Prop}
 
 def Exists.imp := @exists_imp_exists
 
-theorem forall_swap {α β} {p : α → β → Prop} : (∀ x y, p x y) ↔ ∀ y x, p x y :=
+lemma exists_imp_exists' {p : α → Prop} {q : β → Prop} (f : α → β) (hpq : ∀ a, p a → q (f a)) (hp : ∃ a, p a) : ∃ b, q b :=
+exists.elim hp (λ a hp', ⟨_, hpq _ hp'⟩)
+
+theorem forall_swap {p : α → β → Prop} : (∀ x y, p x y) ↔ ∀ y x, p x y :=
 ⟨function.swap, function.swap⟩
 
-theorem exists_swap {α β} {p : α → β → Prop} : (∃ x y, p x y) ↔ ∃ y x, p x y :=
+theorem exists_swap {p : α → β → Prop} : (∃ x y, p x y) ↔ ∃ y x, p x y :=
 ⟨λ ⟨x, y, h⟩, ⟨y, x, h⟩, λ ⟨y, x, h⟩, ⟨x, y, h⟩⟩
 
 @[simp] theorem exists_imp_distrib : ((∃ x, p x) → b) ↔ ∀ x, p x → b :=
@@ -466,6 +489,8 @@ by simp [and_comm]
 ⟨λ h, h a' rfl, λ h a e, e.symm ▸ h⟩
 
 @[simp] theorem exists_eq {a' : α} : ∃ a, a = a' := ⟨_, rfl⟩
+
+@[simp] theorem exists_eq' {a' : α} : Exists (eq a') := ⟨_, rfl⟩
 
 @[simp] theorem exists_eq_left {a' : α} : (∃ a, a = a' ∧ p a) ↔ p a' :=
 ⟨λ ⟨a, e, h⟩, e ▸ h, λ h, ⟨_, rfl, h⟩⟩
@@ -626,7 +651,7 @@ theorem bex.imp_left (H : ∀ x, p x → q x) :
   (∃ x (_ : p x), r x) → ∃ x (_ : q x), r x
 | ⟨x, hp, hr⟩ := ⟨x, H _ hp, hr⟩
 
-theorem ball_of_forall (h : ∀ x, p x) (x) (_ : q x) : p x :=
+theorem ball_of_forall (h : ∀ x, p x) (x) : p x :=
 h x
 
 theorem forall_of_ball (H : ∀ x, p x) (h : ∀ x, p x → q x) (x) : q x :=

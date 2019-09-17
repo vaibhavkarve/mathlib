@@ -9,7 +9,7 @@ Theory of topological rings with uniform structure.
 import topology.algebra.group_completion topology.algebra.ring
 
 open classical set lattice filter topological_space add_comm_group
-local attribute [instance] classical.prop_decidable
+open_locale classical
 noncomputable theory
 
 namespace uniform_space.completion
@@ -105,7 +105,7 @@ have hf : uniform_continuous f, from uniform_continuous_of_continuous hf,
                       (continuous_extension.comp continuous_snd)))
     (assume a b,
       by rw [← coe_add, extension_coe hf, extension_coe hf, extension_coe hf,
-             is_add_group_hom.map_add f]),
+             is_add_hom.map_add f]),
   map_mul := assume a b, completion.induction_on₂ a b
     (is_closed_eq
       (continuous_extension.comp continuous_mul')
@@ -120,7 +120,7 @@ instance top_ring_compl : topological_ring (completion α) :=
   continuous_neg := continuous_neg' }
 
 instance is_ring_hom_map : is_ring_hom (completion.map f) :=
-completion.is_ring_hom_extension $ (continuous_coe β).comp hf
+(completion.is_ring_hom_extension $ (continuous_coe β).comp hf : _)
 
 variables (R : Type*) [comm_ring R] [uniform_space R] [uniform_add_group R] [topological_ring R]
 

@@ -135,6 +135,9 @@ include α
 
 instance : has_coe_to_fun (β →ₗ[α] γ) := ⟨_, to_fun⟩
 
+@[simp] lemma coe_mk (f : β → γ) (h₁ h₂) :
+  ((linear_map.mk f h₁ h₂ : β →ₗ[α] γ) : β → γ) = f := rfl
+
 theorem is_linear : is_linear_map α f := {..f}
 
 @[extensionality] theorem ext {f g : β →ₗ[α] γ} (H : ∀ x, f x = g x) : f = g :=
@@ -150,7 +153,7 @@ theorem ext_iff {f g : β →ₗ[α] γ} : f = g ↔ ∀ x, f x = g x :=
 @[simp] lemma map_zero : f 0 = 0 :=
 by rw [← zero_smul α, map_smul f 0 0, zero_smul]
 
-instance : is_add_group_hom f := ⟨map_add f⟩
+instance : is_add_group_hom f := { map_add := map_add f }
 
 @[simp] lemma map_neg (x : β) : f (- x) = - f x :=
 by rw [← neg_one_smul α, map_smul, neg_one_smul]
@@ -400,7 +403,7 @@ end add_comm_group
 def is_add_group_hom.to_linear_map [add_comm_group α] [add_comm_group β]
   (f : α → β) [is_add_group_hom f] : α →ₗ[ℤ] β :=
 { to_fun := f,
-  add := is_add_group_hom.map_add f,
+  add := is_add_hom.map_add f,
   smul := λ i x, int.induction_on i (by rw [zero_smul, zero_smul, is_add_group_hom.map_zero f])
-    (λ i ih, by rw [add_smul, add_smul, is_add_group_hom.map_add f, ih, one_smul, one_smul])
+    (λ i ih, by rw [add_smul, add_smul, is_add_hom.map_add f, ih, one_smul, one_smul])
     (λ i ih, by rw [sub_smul, sub_smul, is_add_group_hom.map_sub f, ih, one_smul, one_smul]) }
