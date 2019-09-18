@@ -48,9 +48,9 @@ end
 
 def quot {r : α → α → Prop} (h : ∀ g, (r ⇒ r) (a.smul g) (a.smul g)) : M ↷ (quot r) :=
 of_core
-{ smul := λ g, quot.lift (λ x, quot.mk r (g •[a] x)) (λ x y (hxy : r x y), quot.sound $ h g hxy),
-  mul_smul := λ g₁ g₂ x, quot.induction_on x $ λ x', by simp only [a.mul_smul g₁ g₂ x'],
-  one_smul := λ x, quot.induction_on x $ λ x', by simp only [a.one_smul x'] }
+{ smul := λ g, quot.map (a.smul g) (h g),
+  mul_smul := λ g₁ g₂ x, quot.induction_on x $ λ x', by simp only [quot.map, a.mul_smul g₁ g₂ x'],
+  one_smul := λ x, quot.induction_on x $ λ x', by simp only [quot.map, a.one_smul x'] }
 
 def quotient [r : setoid α] (h : ∀ g, ((≈) ⇒ (≈)) (a.smul g) (a.smul g)) : M ↷ (quotient r) :=
 a.quot h
@@ -59,10 +59,5 @@ def on_orbits {G : Type*} [group G] (aG : G ↷ α) (h : a.commute aG) : M ↷ a
 a.quot h.orbit_relator
 
 end monoid
-
-section group
-
-
-end group
 
 end mul_action
