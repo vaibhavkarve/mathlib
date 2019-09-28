@@ -37,7 +37,7 @@ by rw [← a'.mul_smul, mul_left_inv g, a'.one_smul]
 by rw [← a'.mul_smul, mul_right_inv g, a'.one_smul]
 
 @[extensionality]
-lemma ext : function.injective (@smul M _ α) := monoid_hom.ext
+lemma ext : function.injective (@smul M _ α) := monoid_hom.coe_inj
 
 section
 -- TODO : lemmas in this section should be moved to other files
@@ -49,13 +49,6 @@ def units_End_equiv_perm : units (End α) ≃* equiv.perm α :=
   left_inv := λ f, units.ext rfl,
   right_inv := λ π, equiv.eq_of_to_fun_eq rfl,
   map_mul' := λ f g, equiv.eq_of_to_fun_eq rfl }
-
-def to_units : G ≃* units G :=
-{ to_fun := λ g, ⟨g, g⁻¹, mul_inv_self g, inv_mul_self g⟩,
-  inv_fun := coe,
-  left_inv := λ g, rfl,
-  right_inv := λ u, units.ext rfl,
-  map_mul' := λ g₁ g₂, units.ext rfl }
 
 variables {G α}
 

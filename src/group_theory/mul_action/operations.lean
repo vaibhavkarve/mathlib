@@ -13,11 +13,13 @@ section monoid
 
 variables {M : Type u} [monoid M] {α : Type v} (a : M ↷ α)
 
+/-- Apply a homomorphism before acting on a set. -/
 def comp_hom {N : Type*} [monoid N] (f : N →* M) : N ↷ α :=
 monoid_hom.comp a f
 
 variable {a}
 
+/-- Restrict an action to an invariant set. -/
 def is_invariant.restrict {s : set α} (h : a.is_invariant s) : M ↷ s :=
 of_core
 { smul := λ g x, ⟨g •[a] x, h g x.2⟩,
@@ -34,9 +36,10 @@ def commute : Prop := ∀ gM gN x, gM •[aM] gN •[aN] x = gN •[aN] gM •[a
 
 variables {aM aN}
 
-lemma commute.symm (h : aM.commute aN) : aN.commute aM :=
+@[symm] lemma commute.symm (h : aM.commute aN) : aN.commute aM :=
 λ gN gM x, (h gM gN x).symm
 
+/-- If two actions commute, then one sends orbits of another to orbits. -/
 lemma commute.orbit_relator (h : aM.commute aN) (gM : M) :
   (aN.orbit ⇒ aN.orbit) (aM.smul gM) (aM.smul gM) :=
 assume x y ⟨gN, hxy⟩,
@@ -46,15 +49,18 @@ assume x y ⟨gN, hxy⟩,
 
 end
 
+/-- Lift an action to `quot r`. -/
 def quot {r : α → α → Prop} (h : ∀ g, (r ⇒ r) (a.smul g) (a.smul g)) : M ↷ (quot r) :=
 of_core
 { smul := λ g, quot.map (a.smul g) (h g),
   mul_smul := λ g₁ g₂ x, quot.induction_on x $ λ x', by simp only [quot.map, a.mul_smul g₁ g₂ x'],
   one_smul := λ x, quot.induction_on x $ λ x', by simp only [quot.map, a.one_smul x'] }
 
-def quotient [r : setoid α] (h : ∀ g, ((≈) ⇒ (≈)) (a.smul g) (a.smul g)) : M ↷ (quotient r) :=
+/-- Lift an action to `quotient sa` -/
+def quotient [sa : setoid α] (h : ∀ g, ((≈) ⇒ (≈)) (a.smul g) (a.smul g)) : M ↷ (quotient sa) :=
 a.quot h
 
+/-- Lift an action to orbits of another action. -/
 def on_orbits {G : Type*} [group G] (aG : G ↷ α) (h : a.commute aG) : M ↷ aG.orbits :=
 a.quot h.orbit_relator
 
