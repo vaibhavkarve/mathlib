@@ -1,5 +1,6 @@
 import data.nat.prime
 import data.zmod.basic
+import data.num.lemmas
 
 open nat
 
@@ -66,3 +67,30 @@ end
 example : prime (M 7) := Lucas_Lehmer_sufficiency _ (by norm_num) (by norm_num) (by run_Lucas_Lehmer_test).
 example : prime (M 13) := Lucas_Lehmer_sufficiency _ (by norm_num) (by norm_num) (by run_Lucas_Lehmer_test).
 -- example : prime (M 127) := Lucas_Lehmer_sufficiency _ (by norm_num) (by norm_num) (by run_Lucas_Lehmer_test).
+
+-- #eval 2^127 - 1
+-- #eval s 127 50
+-- #eval let a := 2^127 - 1 in let b := s 127 50 in (b * b - 2) % a
+
+-- set_option profiler true
+-- example : (99592518053374632198667753856515678006 * 99592518053374632198667753856515678006 - 2) % (2^127 - 1) = 71264320053401377760498554706288870501 :=
+-- by norm_num
+
+def two_to_the_n_minus_1 (n : ℕ) : num := num.pos (iterate pos_num.bit1 (n-1) pos_num.one)
+
+def fast_mod_1 (n : ℕ) (N : num) : num :=
+ N.land (two_to_the_n_minus_1 n) + N.shiftr n
+
+lemma fast_mod_1_lt (n : ℕ) (N : num) (h : N.shiftr n ≠ 0) : fast_mod_1 n N < N := sorry
+
+def fast_mod (n : ℕ) : num → num
+| N := let r := fast_mod_1 n N in
+       if h : N.shiftr n = 0 then
+         if r = two_to_the_n_minus_1 n then 0 else r
+       else have r < N := fast_mod_1_lt n N h, fast_mod r
+
+lemma fast_mod_eq_mod (n : ℕ) (N : num) : fast_mod n N = N % n := sorry
+
+#eval fast_mod 5 32
+
+lemma foo (n k : ℕ) : k % (2^n - 1) = (k % 2^n + (k / 2^n)) % (2^n - 1) := sorry
