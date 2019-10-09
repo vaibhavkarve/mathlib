@@ -1,6 +1,7 @@
 import data.nat.prime
 import data.zmod.basic
 import data.num.lemmas
+import data.nat.modeq
 
 open nat
 
@@ -93,4 +94,29 @@ lemma fast_mod_eq_mod (n : ℕ) (N : num) : fast_mod n N = N % n := sorry
 
 #eval fast_mod 5 32
 
-lemma foo (n k : ℕ) : k % (2^n - 1) = (k % 2^n + (k / 2^n)) % (2^n - 1) := sorry
+lemma bar (a b : ℕ) : a = (a / b) * b + (a % b) :=
+begin
+  symmetry,
+  rw [add_comm, mul_comm],
+  convert nat.mod_add_div _ _,
+end
+
+
+lemma foo (n k : ℕ) : k ≡ ((k / 2^n) + (k % 2^n)) [MOD 2^n - 1] :=
+-- See https://leanprover.zulipchat.com/#narrow/stream/113489-new-members/topic/help.20finding.20a.20lemma/near/177698446
+begin
+  conv {to_rhs, rw [← nat.mod_add_div k (2^n), add_comm]},
+  refine nat.modeq.modeq_add _ (by refl),
+  conv {to_rhs, skip, rw ← one_mul (k/2^n)},
+  refine nat.modeq.modeq_mul _ (by refl),
+  symmetry,
+  rw [nat.modeq.modeq_iff_dvd, int.coe_nat_sub],
+  exact nat.pow_pos dec_trivial _
+end
+
+
+lemma foo' (n k : ℕ) : (k : zmod (2^n -1)) = ((k / 2^n + k % 2^n : ℕ) : zmod (2^n - 1)) :=
+begin
+  conv {to_lhs, rw [← nat.mod_add_div k (2^n), add_comm]},
+  -- I want `push_cast`!
+end
