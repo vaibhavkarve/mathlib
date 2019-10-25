@@ -1,0 +1,43 @@
+default:
+  # timeout: 600 # timeout in minutes
+  cache:
+    paths:
+      - src/
+  before_script:
+  - |
+    if [ ! -d "$HOME/.elan/toolchains/" ]; then
+      curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain none -y
+    fi
+  - source ~/.elan/env
+  - elan toolchain install leanprover-community/lean:nightly
+  - elan toolchain install 3.4.2
+  - elan toolchain install 3.4.1
+  - elan toolchain install 3.4.0
+  - elan default leanprover-community/lean:nightly # 3.4.2
+  - lean -v
+
+stages:
+  - first-phase
+  - second-phase
+
+first-phase:
+  stage: first-phase
+  artifacts:
+    paths:
+      - src/
+      - archive/
+      - docs/
+  script:
+    - timeout 10200 leanpkg build | python scripts/detect_errors.py
+
+second-phase:
+  stage: second-phase
+  artifacts:
+    paths:
+      - src/
+      - archive/
+      - docs/
+  script:
+    - leanpkg build
+    - lean --make archive/
+    - lean --make docs/
