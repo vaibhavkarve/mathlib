@@ -309,12 +309,25 @@ lemma map_ne_one_iff {α β} [monoid α] [monoid β] (h : α ≃* β) (x : α) :
   h x ≠ 1 ↔ x ≠ 1 :=
 ⟨mt (h.map_eq_one_iff x).2, mt (h.map_eq_one_iff x).1⟩
 
-/-- A multiplicative bijection between two monoids is an isomorphism. -/
+/--
+Extract the forward direction of a multiplicative equivalence
+as a multiplication preserving function.
+-/
 @[to_additive to_add_monoid_hom]
 def to_monoid_hom {α β} [monoid α] [monoid β] (h : α ≃* β) : (α →* β) :=
 { to_fun := h,
   map_mul' := h.map_mul,
   map_one' := h.map_one }
+
+@[simp, to_additive]
+lemma to_monoid_hom_apply_symm_to_monoid_hom_apply {α β} [monoid α] [monoid β] (e : α ≃* β) :
+  ∀ (y : β), e.to_monoid_hom (e.symm.to_monoid_hom y) = y :=
+e.to_equiv.apply_symm_apply
+
+@[simp, to_additive]
+lemma symm_to_monoid_hom_apply_to_monoid_hom_apply {α β} [monoid α] [monoid β] (e : α ≃* β) :
+  ∀ (x : α), e.symm.to_monoid_hom (e.to_monoid_hom x) = x :=
+equiv.symm_apply_apply (e.to_equiv)
 
 /-- A multiplicative equivalence of groups preserves inversion. -/
 @[to_additive]
@@ -335,7 +348,7 @@ instance is_group_hom {α β} [group α] [group β] (h : α ≃* β) :
 
 /-- Two multiplicative isomorphisms agree if they are defined by the
     same underlying function. -/
-@[extensionality, to_additive
+@[ext, to_additive
   "Two additive isomorphisms agree if they are defined by the same underlying function."]
 lemma ext {α β : Type*} [has_mul α] [has_mul β]
   {f g : mul_equiv α β} (h : ∀ x, f x = g x) : f = g :=
@@ -346,7 +359,7 @@ begin
   { exact congr_arg equiv.inv_fun h₁ }
 end
 
-attribute [extensionality] add_equiv.ext
+attribute [ext] add_equiv.ext
 
 end mul_equiv
 
@@ -511,10 +524,10 @@ def to_ring_hom (e : α ≃+* β) : α →+* β :=
 { .. e.to_mul_equiv.to_monoid_hom, .. e.to_add_equiv.to_add_monoid_hom }
 
 /-- Reinterpret a ring equivalence as a monoid homomorphism. -/
-def to_monoid_hom (e : α ≃+* β) : α →* β := e.to_ring_hom.to_monoid_hom
+abbreviation to_monoid_hom (e : α ≃+* β) : α →* β := e.to_ring_hom.to_monoid_hom
 
-/-- Reinterpret a ring equivalence as an add_monoid homomorphism. -/
-def to_add_monoid_hom (e : α ≃+* β) : α →+ β := e.to_ring_hom.to_add_monoid_hom
+/-- Reinterpret a ring equivalence as an `add_monoid` homomorphism. -/
+abbreviation to_add_monoid_hom (e : α ≃+* β) : α →+ β := e.to_ring_hom.to_add_monoid_hom
 
 /-- Interpret an equivalence `f : α ≃ β` as a ring equivalence `α ≃+* β`. -/
 def of (e : α ≃ β) [is_semiring_hom e] : α ≃+* β :=
@@ -522,15 +535,44 @@ def of (e : α ≃ β) [is_semiring_hom e] : α ≃+* β :=
 
 instance (e : α ≃+* β) : is_semiring_hom e := e.to_ring_hom.is_semiring_hom
 
-def is_ring_hom_of_mul_equiv {R : Type*} {S : Type*} [ring R] [ring S]
-  (h : R ≃* S) (H: ∀ x y : R, h (x + y) = h x + h y) : is_ring_hom h :=
-@ring_hom.is_ring_hom _ _ _ _ $ ring_hom.mk' h.to_monoid_hom H
+@[simp]
+lemma to_ring_hom_apply_symm_to_ring_hom_apply {α β} [semiring α] [semiring β] (e : α ≃+* β) :
+  ∀ (y : β), e.to_ring_hom (e.symm.to_ring_hom y) = y :=
+e.to_equiv.apply_symm_apply
 
-def of_mul_equiv {R : Type*} {S : Type*} [ring R] [ring S] (h : R ≃* S)
-  (H: ∀ x y : R, h (x + y) = h x + h y) : R ≃+* S :=
-{..h.to_equiv, ..h, ..add_equiv.mk' h.to_equiv H }
+@[simp]
+lemma symm_to_ring_hom_apply_to_ring_hom_apply {α β} [semiring α] [semiring β] (e : α ≃+* β) :
+  ∀ (x : α), e.symm.to_ring_hom (e.to_ring_hom x) = x :=
+equiv.symm_apply_apply (e.to_equiv)
 
 end semiring_hom
+
+end ring_equiv
+
+namespace mul_equiv
+
+/-- Gives an `is_semiring_hom` instance from a `mul_equiv` of semirings that preserves addition. -/
+protected lemma to_semiring_hom {R : Type*} {S : Type*} [semiring R] [semiring S]
+  (h : R ≃* S) (H : ∀ x y : R, h (x + y) = h x + h y) : is_semiring_hom h :=
+⟨add_equiv.map_zero $ add_equiv.mk' h.to_equiv H, h.map_one, H, h.5⟩
+
+/-- Gives a `ring_equiv` from a `mul_equiv` preserving addition.-/
+def to_ring_equiv {R : Type*} {S : Type*} [has_add R] [has_add S] [has_mul R] [has_mul S]
+  (h : R ≃* S) (H : ∀ x y : R, h (x + y) = h x + h y) : R ≃+* S :=
+{..h.to_equiv, ..h, ..add_equiv.mk' h.to_equiv H }
+
+end mul_equiv
+
+namespace add_equiv
+
+/-- Gives an `is_semiring_hom` instance from a `mul_equiv` of semirings that preserves addition. -/
+protected lemma to_semiring_hom {R : Type*} {S : Type*} [semiring R] [semiring S]
+  (h : R ≃+ S) (H : ∀ x y : R, h (x * y) = h x * h y) : is_semiring_hom h :=
+⟨h.map_zero, mul_equiv.map_one $ mul_equiv.mk' h.to_equiv H, h.5, H⟩
+
+end add_equiv
+
+namespace ring_equiv
 
 section ring_hom
 
@@ -546,7 +588,7 @@ end ring_hom
 
 /-- Two ring isomorphisms agree if they are defined by the
     same underlying function. -/
-@[extensionality] lemma ext {R S : Type*} [has_mul R] [has_add R] [has_mul S] [has_add S]
+@[ext] lemma ext {R S : Type*} [has_mul R] [has_add R] [has_mul S] [has_add S]
   {f g : R ≃+* S} (h : ∀ x, f x = g x) : f = g :=
 begin
   have h₁ := equiv.ext f.to_equiv g.to_equiv h,

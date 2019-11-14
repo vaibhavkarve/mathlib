@@ -272,7 +272,7 @@ rfl
 lemma coe_inj ⦃f g : M →* N⦄ (h : (f : M → N) = g) : f = g :=
 by cases f; cases g; cases h; refl
 
-@[extensionality, to_additive]
+@[ext, to_additive]
 lemma ext ⦃f g : M →* N⦄ (h : ∀ x, f x = g x) : f = g :=
 coe_inj (funext h)
 
@@ -320,8 +320,8 @@ def comp (hnp : N →* P) (hmn : M →* N) : M →* P :=
 
 /-- Composition of monoid homomorphisms is associative. -/
 @[to_additive] lemma comp_assoc {Q : Type*} [monoid Q] (f : M →* N) (g : N →* P) (h : P →* Q) :
-  (h.comp g).comp f = h.comp (g.comp f) :=
-rfl
+  (h.comp g).comp f = h.comp (g.comp f) := rfl
+
 omit mP
 variables [mM] [mN]
 

@@ -78,17 +78,51 @@ lemma mk_eq_mul_mk_one (x : α) (y : S) :
 
 @[simp] lemma of_is_unit (y : S) : is_unit (of S y) := monoid_hom.of_is_unit _
 
-@[simp] lemma of_is_unit' (x : α) (hx : x ∈ S) : is_unit (of S x) :=
-monoid_hom.of_is_unit' _ hx
+/-- The natural map from the submonoid to the unit group of the localization.-/
+def to_units (s : S) : units (localization α S) :=
+{ val := s,
+  inv := mk 1 s,
+  val_inv := quotient.sound $ r_of_eq $ mul_assoc _ _ _,
+  inv_val := quotient.sound $ r_of_eq $ show s.val * 1 * 1 = 1 * (1 * s.val), by simp }
+
+@[simp] lemma to_units_coe (s : S) : ((to_units s) : localization α S) = s := rfl
+
+section
+variables (α S) (x y : α) (n : ℕ)
+@[simp] lemma of_zero : (of 0 : localization α S) = 0 := rfl
+@[simp] lemma of_one : (of 1 : localization α S) = 1 := rfl
+@[simp] lemma of_add : (of (x + y) : localization α S) = of x + of y :=
+by apply is_ring_hom.map_add
+
+@[simp] lemma of_sub : (of (x - y) : localization α S) = of x - of y :=
+by apply is_ring_hom.map_sub
+
+@[simp] lemma of_mul : (of (x * y) : localization α S) = of x * of y :=
+by apply is_ring_hom.map_mul
+
+@[simp] lemma of_neg : (of (-x) : localization α S) = -of x :=
+by apply is_ring_hom.map_neg
+
+@[simp] lemma of_pow : (of (x ^ n) : localization α S) = (of x) ^ n :=
+by apply is_semiring_hom.map_pow
+
+@[simp] lemma of_is_unit (s : S) : is_unit (of s : localization α S) :=
+is_unit_unit $ to_units s
+
+@[simp] lemma of_is_unit' (s ∈ S) : is_unit (of s : localization α S) :=
+is_unit_unit $ to_units ⟨s, ‹s ∈ S›⟩
+
+@[simp] lemma coe_zero : ((0 : α) : localization α S) = 0 := rfl
+@[simp] lemma coe_one : ((1 : α) : localization α S) = 1 := rfl
+@[simp] lemma coe_add : (↑(x + y) : localization α S) = x + y := of_add _ _ _ _
+@[simp] lemma coe_sub : (↑(x - y) : localization α S) = x - y := of_sub _ _ _ _
+@[simp] lemma coe_mul : (↑(x * y) : localization α S) = x * y := of_mul _ _ _ _
+@[simp] lemma coe_neg : (↑(-x) : localization α S) = -x := of_neg _ _ _
+@[simp] lemma coe_pow : (↑(x ^ n) : localization α S) = x ^ n := of_pow _ _ _ _
+@[simp] lemma coe_is_unit (s : S) : is_unit (s : localization α S) := of_is_unit _ _ _
+@[simp] lemma coe_is_unit' (s ∈ S) : is_unit (s : localization α S) := of_is_unit' _ _ _ ‹s ∈ S›
+end
 -/
---lemma to_units_map (g : localization α S →+* β) (y : S) :
---g (to_units S y) = units.map g.to_monoid_hom (to_units S y) :=
---monoid_hom.to_units_map g.to_monoid_hom _
-
---lemma to_units_map_inv (g : localization α S →+* β) (y : S) :
---g ((to_units S y)⁻¹ : _) = ((units.map g.to_monoid_hom (to_units S y))⁻¹ : _) :=
---monoid_hom.to_units_map_inv g.to_monoid_hom _
-
 --lemma mk_eq (x : α) (y : S) :
 --  mk x y = of S x * ((to_units S y)⁻¹ : _) := monoid_hom.mk_eq x y
 

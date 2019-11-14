@@ -46,12 +46,13 @@ class topological_module (α : Type u) (β : Type v)
   [module α β]
   extends topological_semimodule α β : Prop
 
+/-- A topological vector space is a topological module over a field. -/
 class topological_vector_space (α : Type u) (β : Type v)
   [discrete_field α] [topological_space α]
   [topological_space β] [add_comm_group β] [vector_space α β]
   extends topological_module α β
 
-/- Continuous linear maps between modules. Only put the type classes that are necessary for the
+/-- Continuous linear maps between modules. We only put the type classes that are necessary for the
 definition, although in applications β and γ will be topological modules over the topological
 ring α -/
 structure continuous_linear_map
@@ -84,7 +85,7 @@ protected lemma continuous (f : β →L[α] γ) : continuous f := f.2
 /-- Coerce continuous linear maps to functions. -/
 instance to_fun : has_coe_to_fun $ β →L[α] γ := ⟨_, λ f, f.to_fun⟩
 
-@[extensionality] theorem ext {f g : β →L[α] γ} (h : ∀ x, f x = g x) : f = g :=
+@[ext] theorem ext {f g : β →L[α] γ} (h : ∀ x, f x = g x) : f = g :=
 by cases f; cases g; congr' 1; ext x; apply h
 
 theorem ext_iff {f g : β →L[α] γ} : f = g ↔ ∀ x, f x = g x :=
@@ -123,6 +124,8 @@ instance : has_one (β →L[α] β) := ⟨id⟩
 @[simp] lemma id_apply : (id : β →L[α] β) x = x := rfl
 @[simp, elim_cast] lemma coe_id : ((id : β →L[α] β) : β →ₗ[α] β) = linear_map.id := rfl
 @[simp, elim_cast] lemma coe_id' : ((id : β →L[α] β) : β → β) = _root_.id := rfl
+
+@[simp] lemma one_apply : (1 : β →L[α] β) x = x := rfl
 
 section add
 variables [topological_add_group γ]
@@ -194,11 +197,28 @@ variables (c : α) (f g : β →L[α] γ) (x y z : β)
 @[simp, move_cast] lemma coe_apply : (((c • f) : β →L[α] γ) : β →ₗ[α] γ) = c • (f : β →ₗ[α] γ) := rfl
 @[move_cast] lemma coe_apply' : (((c • f) : β →L[α] γ) : β → γ) = c • (f : β → γ) := rfl
 
-/-- Associating to a scalar-valued linear map and an element of `γ` the
-`γ`-valued linear map obtained by multiplying the two (a.k.a. tensoring by `γ`) -/
-def scalar_prod_space_iso (c : β →L[α] α) (f : γ) : β →L[α] γ :=
+/-- The linear map `λ x, c x • f`.  Associates to a scalar-valued linear map and an element of
+`γ` the `γ`-valued linear map obtained by multiplying the two (a.k.a. tensoring by `γ`) -/
+def smul_right (c : β →L[α] α) (f : γ) : β →L[α] γ :=
 { cont := continuous_smul c.2 continuous_const,
-  ..c.to_linear_map.scalar_prod_space_iso f }
+  ..c.to_linear_map.smul_right f }
+
+@[simp]
+lemma smul_right_apply {c : β →L[α] α} {f : γ} {x : β} :
+  (smul_right c f : β → γ) x = (c : β → α) x • f :=
+rfl
+
+@[simp]
+lemma smul_right_one_one (c : α →L[α] γ) : smul_right 1 ((c : α → γ) 1) = c :=
+by ext; simp [-continuous_linear_map.map_smul, (continuous_linear_map.map_smul _ _ _).symm]
+
+@[simp]
+lemma smul_right_one_eq_iff {f f' : γ} :
+  smul_right (1 : α →L[α] α) f = smul_right 1 f' ↔ f = f' :=
+⟨λ h, have (smul_right (1 : α →L[α] α) f : α → γ) 1 = (smul_right (1 : α →L[α] α) f' : α → γ) 1,
+        by rw h,
+      by simp at this; assumption,
+  by cc⟩
 
 variable [topological_add_group γ]
 
