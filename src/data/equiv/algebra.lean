@@ -348,8 +348,7 @@ instance is_group_hom {α β} [group α] [group β] (h : α ≃* β) :
 
 /-- Two multiplicative isomorphisms agree if they are defined by the
     same underlying function. -/
-@[ext, to_additive
-  "Two additive isomorphisms agree if they are defined by the same underlying function."]
+@[ext, to_additive "Two additive isomorphisms agree if they are defined by the same underlying function."]
 lemma ext {α β : Type*} [has_mul α] [has_mul β]
   {f g : mul_equiv α β} (h : ∀ x, f x = g x) : f = g :=
 begin
