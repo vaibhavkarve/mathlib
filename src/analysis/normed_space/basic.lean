@@ -283,11 +283,6 @@ begin
     ... = ε : add_halves _
 end
 
-@[priority 100] -- see Note [lower instance priority]
-instance normed_top_monoid : topological_add_monoid α := by apply_instance -- short-circuit type class inference
-@[priority 100] -- see Note [lower instance priority]
-instance normed_top_group : topological_add_group α := by apply_instance -- short-circuit type class inference
-
 end normed_group
 
 section normed_ring
