@@ -5,7 +5,7 @@ Authors: Jeremy Avigad, Simon Hudon, Mario Carneiro
 
 Various multiplicative and additive structures.
 -/
-import algebra.group.to_additive
+import algebra.group.to_additive logic.function
 
 universe u
 variable {α : Type u}
@@ -19,6 +19,14 @@ instance monoid_to_is_left_id {α : Type*} [monoid α]
 instance monoid_to_is_right_id {α : Type*} [monoid α]
 : is_right_id α (*) 1 :=
 ⟨ monoid.mul_one ⟩
+
+@[to_additive]
+theorem mul_left_injective [left_cancel_semigroup α] (a : α) : function.injective ((*) a) :=
+λ b c, mul_left_cancel
+
+@[to_additive]
+theorem mul_right_injective [right_cancel_semigroup α] (a : α) : function.injective (λ x, x * a) :=
+λ b c, mul_right_cancel
 
 @[simp, to_additive]
 theorem mul_left_inj [left_cancel_semigroup α] (a : α) {b c : α} : a * b = a * c ↔ b = c :=
@@ -140,8 +148,6 @@ section add_group
 
   local attribute [simp] sub_eq_add_neg
 
-  def sub_sub_cancel := @sub_sub_self
-
   @[simp] lemma sub_left_inj : a - b = a - c ↔ b = c :=
   (add_left_inj _).trans neg_inj'
 
@@ -153,6 +159,9 @@ section add_group
 
   lemma sub_sub_sub_cancel_right (a b c : α) : (a - c) - (b - c) = a - b :=
   by rw [← neg_sub c b, sub_neg_eq_add, sub_add_sub_cancel]
+
+  theorem sub_sub_assoc_swap : a - (b - c) = a + c - b :=
+  by simp
 
   theorem sub_eq_zero : a - b = 0 ↔ a = b :=
   ⟨eq_of_sub_eq_zero, λ h, by rw [h, sub_self]⟩
@@ -187,6 +196,8 @@ end add_group
 section add_comm_group
   variables [add_comm_group α] {a b c : α}
 
+  lemma sub_sub_cancel (a b : α) : a - (a - b) = b := sub_sub_self a b
+
   lemma sub_eq_neg_add (a b : α) : a - b = -b + a :=
   add_comm _ _
 
@@ -205,9 +216,9 @@ section add_comm_group
 
   lemma add_sub_cancel'_right (a b : α) : a + (b - a) = b :=
   by rw [← add_sub_assoc, add_sub_cancel']
-  
+
   @[simp] lemma add_add_neg_cancel'_right (a b : α) : a + (b + -a) = b :=
-  add_sub_cancel'_right a b 
+  add_sub_cancel'_right a b
 
   lemma sub_right_comm (a b c : α) : a - b - c = a - c - b :=
   add_right_comm _ _ _
@@ -241,3 +252,6 @@ section add_monoid
   show 0+0+1=(1:α), by rw [zero_add, zero_add]
 
 end add_monoid
+
+@[to_additive]
+lemma inv_involutive {α} [group α] : function.involutive (has_inv.inv : α → α) := inv_inv

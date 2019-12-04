@@ -16,13 +16,13 @@ variables {α : Type u} {β : Type v} {γ : Type w}
 
 open polynomial ideal
 
-def adjoin_root [comm_ring α] [decidable_eq α] (f : polynomial α) : Type u :=
+def adjoin_root [comm_ring α] (f : polynomial α) : Type u :=
 ideal.quotient (span {f} : ideal (polynomial α))
 
 namespace adjoin_root
 
 section comm_ring
-variables [comm_ring α] [decidable_eq α] (f : polynomial α)
+variables [comm_ring α] (f : polynomial α)
 
 instance : comm_ring (adjoin_root f) := ideal.quotient.comm_ring _
 
@@ -95,8 +95,9 @@ principal_ideal_domain.is_maximal_of_irreducible ‹irreducible f›
 noncomputable instance field : discrete_field (adjoin_root f) :=
 ideal.quotient.field (span {f} : ideal (polynomial α))
 
+ -- short-circuit type class inference
 instance : is_field_hom (coe : α → adjoin_root f) := by apply_instance
-
+ -- short-circuit type class inference
 instance lift_is_field_hom [field β] {i : α → β} [is_ring_hom i] {a : β}
   {h : f.eval₂ i a = 0} : is_field_hom (lift i a h) := by apply_instance
 

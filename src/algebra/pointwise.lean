@@ -75,11 +75,11 @@ def pointwise_mul_monoid [monoid α] : monoid (set α) :=
 local attribute [instance] pointwise_mul_monoid
 
 @[to_additive]
-def singleton.is_mul_hom [has_mul α] : is_mul_hom (singleton : α → set α) :=
+lemma singleton.is_mul_hom [has_mul α] : is_mul_hom (singleton : α → set α) :=
 { map_mul := λ x y, set.ext $ λ a, by simp [mem_singleton_iff, mem_pointwise_mul] }
 
 @[to_additive is_add_monoid_hom]
-def singleton.is_monoid_hom [monoid α] : is_monoid_hom (singleton : α → set α) :=
+lemma singleton.is_monoid_hom [monoid α] : is_monoid_hom (singleton : α → set α) :=
 { map_one := rfl, ..singleton.is_mul_hom }
 
 @[to_additive]
@@ -185,6 +185,15 @@ def pointwise_mul_comm_semiring [comm_monoid α] : comm_semiring (set α) :=
 
 local attribute [instance] pointwise_mul_semiring
 
+def comm_monoid [comm_monoid α] : comm_monoid (set α) :=
+@comm_semiring.to_comm_monoid (set α) pointwise_mul_comm_semiring
+
+def add_comm_monoid [add_comm_monoid α] : add_comm_monoid (set α) :=
+show @add_comm_monoid (additive (set (multiplicative α))),
+from @additive.add_comm_monoid _ set.comm_monoid
+
+attribute [to_additive set.add_comm_monoid] set.comm_monoid
+
 section is_mul_hom
 open is_mul_hom
 
@@ -212,7 +221,7 @@ end is_mul_hom
 
 variables [monoid α] [monoid β] [is_monoid_hom f]
 
-def pointwise_mul_image_is_semiring_hom : is_semiring_hom (image f) :=
+lemma pointwise_mul_image_is_semiring_hom : is_semiring_hom (image f) :=
 { map_zero := image_empty _,
   map_one := by erw [image_singleton, is_monoid_hom.map_one f]; refl,
   map_add := image_union _,

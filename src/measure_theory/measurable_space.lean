@@ -47,9 +47,9 @@ defined in terms of the Galois connection induced by f.
 
 ## References
 
-* https://en.wikipedia.org/wiki/Measurable_space
-* https://en.wikipedia.org/wiki/Sigma-algebra
-* https://en.wikipedia.org/wiki/Dynkin_system
+* <https://en.wikipedia.org/wiki/Measurable_space>
+* <https://en.wikipedia.org/wiki/Sigma-algebra>
+* <https://en.wikipedia.org/wiki/Dynkin_system>
 
 ## Tags
 
@@ -171,7 +171,7 @@ by by_cases p; simp [h, is_measurable.empty]; apply is_measurable.univ
 
 end
 
-@[extensionality] lemma measurable_space.ext :
+@[ext] lemma measurable_space.ext :
   ∀{m₁ m₂ : measurable_space α}, (∀s:set α, m₁.is_measurable s ↔ m₂.is_measurable s) → m₁ = m₂
 | ⟨s₁, _, _, _⟩ ⟨s₂, _, _, _⟩ h :=
   have s₁ = s₂, from funext $ assume x, propext $ h x,
@@ -256,7 +256,7 @@ let b : measurable_space α :=
         (hf i).elim (by simp {contextual := tt}) (assume hi, false.elim $ h ⟨i, hi⟩)) } in
 have b = ⊥, from bot_unique $ assume s hs,
   hs.elim (assume s, s.symm ▸ @is_measurable_empty _ ⊥) (assume s, s.symm ▸ @is_measurable.univ _ ⊥),
-this ▸ iff.refl _
+this ▸ iff.rfl
 
 @[simp] theorem is_measurable_top {s : set α} : @is_measurable _ ⊤ s := trivial
 
@@ -540,26 +540,24 @@ lemma measurable_sum_rec {f : α → γ} {g : β → γ}
   (hf : measurable f) (hg : measurable g) : @measurable (α ⊕ β) γ _ _ (@sum.rec α β (λ_, γ) f g) :=
 measurable_sum hf hg
 
-lemma is_measurable_inl_image [measurable_space α] [measurable_space β] {s : set α}
-  (hs : is_measurable s) : is_measurable (sum.inl '' s : set (α ⊕ β)) :=
+lemma is_measurable_inl_image {s : set α} (hs : is_measurable s) :
+  is_measurable (sum.inl '' s : set (α ⊕ β)) :=
 ⟨show is_measurable (sum.inl ⁻¹' _), by rwa [preimage_image_eq]; exact (assume a b, sum.inl.inj),
   have sum.inr ⁻¹' (sum.inl '' s : set (α ⊕ β)) = ∅ :=
     eq_empty_of_subset_empty $ assume x ⟨y, hy, eq⟩, by contradiction,
   show is_measurable (sum.inr ⁻¹' _), by rw [this]; exact is_measurable.empty⟩
 
-lemma is_measurable_range_inl [measurable_space α] [measurable_space β] :
-  is_measurable (range sum.inl : set (α ⊕ β)) :=
+lemma is_measurable_range_inl : is_measurable (range sum.inl : set (α ⊕ β)) :=
 by rw [← image_univ]; exact is_measurable_inl_image is_measurable.univ
 
-lemma is_measurable_inr_image [measurable_space α] [measurable_space β] {s : set β}
-  (hs : is_measurable s) : is_measurable (sum.inr '' s : set (α ⊕ β)) :=
+lemma is_measurable_inr_image {s : set β} (hs : is_measurable s) :
+  is_measurable (sum.inr '' s : set (α ⊕ β)) :=
 ⟨ have sum.inl ⁻¹' (sum.inr '' s : set (α ⊕ β)) = ∅ :=
     eq_empty_of_subset_empty $ assume x ⟨y, hy, eq⟩, by contradiction,
   show is_measurable (sum.inl ⁻¹' _), by rw [this]; exact is_measurable.empty,
   show is_measurable (sum.inr ⁻¹' _), by rwa [preimage_image_eq]; exact (assume a b, sum.inr.inj)⟩
 
-lemma is_measurable_range_inr [measurable_space α] [measurable_space β] :
-  is_measurable (range sum.inr : set (α ⊕ β)) :=
+lemma is_measurable_range_inr : is_measurable (range sum.inr : set (α ⊕ β)) :=
 by rw [← image_univ]; exact is_measurable_inr_image is_measurable.univ
 
 end sum
@@ -823,7 +821,7 @@ end
 
 namespace dynkin_system
 
-@[extensionality] lemma ext :
+@[ext] lemma ext :
   ∀{d₁ d₂ : dynkin_system α}, (∀s:set α, d₁.has s ↔ d₂.has s) → d₁ = d₂
 | ⟨s₁, _, _, _⟩ ⟨s₂, _, _, _⟩ h :=
   have s₁ = s₂, from funext $ assume x, propext $ h x,

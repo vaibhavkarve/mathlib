@@ -11,10 +11,6 @@ open function
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w} {r : α → α → Prop}
 
-protected noncomputable def classical.decidable_linear_order [I : linear_order α] :
-  decidable_linear_order α :=
-{ decidable_le := classical.dec_rel _, ..I }
-
 theorem ge_of_eq [preorder α] {a b : α} : a = b → a ≥ b :=
 λ h, h ▸ le_refl a
 
@@ -114,7 +110,7 @@ theorem monotone_id : @monotone α α _ _ id := assume x y h, h
 
 theorem monotone_const {b : β} : monotone (λ(a:α), b) := assume x y h, le_refl b
 
-theorem monotone_comp {f : α → β} {g : β → γ} (m_f : monotone f) (m_g : monotone g) :
+protected theorem monotone.comp {g : β → γ} {f : α → β} (m_g : monotone g) (m_f : monotone f) :
   monotone (g ∘ f) :=
 assume a b h, m_g (m_f h)
 
@@ -334,9 +330,12 @@ def partial_order_of_SO (r) [is_strict_order α r] : partial_order α :=
       (asymm h)⟩,
     λ ⟨h₁, h₂⟩, h₁.resolve_left (λ e, h₂ $ e ▸ or.inl rfl)⟩ }
 
+section prio
+set_option default_priority 100 -- see Note [default priority]
 /-- This is basically the same as `is_strict_total_order`, but that definition is
   in Type (probably by mistake) and also has redundant assumptions. -/
 @[algebra] class is_strict_total_order' (α : Type u) (lt : α → α → Prop) extends is_trichotomous α lt, is_strict_order α lt : Prop.
+end prio
 
 /-- Construct a linear order from a `is_strict_total_order'` relation -/
 def linear_order_of_STO' (r) [is_strict_total_order' α r] : linear_order α :=
@@ -380,6 +379,7 @@ theorem is_strict_weak_order_of_is_order_connected [is_asymm α r]
     ⟨is_order_connected.neg_trans h₁ h₃, is_order_connected.neg_trans h₄ h₂⟩,
   ..@is_irrefl_of_is_asymm α r _ }
 
+@[priority 100] -- see Note [lower instance priority]
 instance is_order_connected_of_is_strict_total_order'
   [is_strict_total_order' α r] : is_order_connected α r :=
 ⟨λ a b c h, (trichotomous _ _).imp_right (λ o,
@@ -400,21 +400,31 @@ instance [linear_order α] : is_strict_weak_order α (<) := by apply_instance
 @[algebra] class is_extensional (α : Type u) (r : α → α → Prop) : Prop :=
 (ext : ∀ a b, (∀ x, r x a ↔ r x b) → a = b)
 
+@[priority 100] -- see Note [lower instance priority]
 instance is_extensional_of_is_strict_total_order'
   [is_strict_total_order' α r] : is_extensional α r :=
 ⟨λ a b H, ((@trichotomous _ r _ a b)
   .resolve_left $ mt (H _).2 (irrefl a))
   .resolve_right $ mt (H _).1 (irrefl b)⟩
 
+section prio
+set_option default_priority 100 -- see Note [default priority]
 /-- A well order is a well-founded linear order. -/
 @[algebra] class is_well_order (α : Type u) (r : α → α → Prop) extends is_strict_total_order' α r : Prop :=
 (wf : well_founded r)
+end prio
 
+@[priority 100] -- see Note [lower instance priority]
 instance is_well_order.is_strict_total_order {α} (r : α → α → Prop) [is_well_order α r] : is_strict_total_order α r := by apply_instance
+@[priority 100] -- see Note [lower instance priority]
 instance is_well_order.is_extensional {α} (r : α → α → Prop) [is_well_order α r] : is_extensional α r := by apply_instance
+@[priority 100] -- see Note [lower instance priority]
 instance is_well_order.is_trichotomous {α} (r : α → α → Prop) [is_well_order α r] : is_trichotomous α r := by apply_instance
+@[priority 100] -- see Note [lower instance priority]
 instance is_well_order.is_trans {α} (r : α → α → Prop) [is_well_order α r] : is_trans α r := by apply_instance
+@[priority 100] -- see Note [lower instance priority]
 instance is_well_order.is_irrefl {α} (r : α → α → Prop) [is_well_order α r] : is_irrefl α r := by apply_instance
+@[priority 100] -- see Note [lower instance priority]
 instance is_well_order.is_asymm {α} (r : α → α → Prop) [is_well_order α r] : is_asymm α r := by apply_instance
 
 noncomputable def decidable_linear_order_of_is_well_order (r : α → α → Prop) [is_well_order α r] :
@@ -548,5 +558,13 @@ theorem directed_mono {s : α → α → Prop} {ι} (f : ι → α)
   (H : ∀ a b, r a b → s a b) (h : directed r f) : directed s f :=
 λ a b, let ⟨c, h₁, h₂⟩ := h a b in ⟨c, H _ _ h₁, H _ _ h₂⟩
 
+/-- A monotone function on a linear order is directed. -/
+lemma directed_of_mono {ι} [decidable_linear_order ι] (f : ι → α)
+  (H : ∀ i j, i ≤ j → f i ≼ f j) : directed (≼) f :=
+λ a b, ⟨max a b, H _ _ (le_max_left _ _), H _ _ (le_max_right _ _)⟩
+
+section prio
+set_option default_priority 100 -- see Note [default priority]
 class directed_order (α : Type u) extends preorder α :=
 (directed : ∀ i j : α, ∃ k, i ≤ k ∧ j ≤ k)
+end prio

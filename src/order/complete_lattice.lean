@@ -33,6 +33,8 @@ lemma has_Sup_to_nonempty (α) [has_Sup α] : nonempty α := ⟨Sup ∅⟩
 notation `⨆` binders `, ` r:(scoped f, supr f) := r
 notation `⨅` binders `, ` r:(scoped f, infi f) := r
 
+section prio
+set_option default_priority 100 -- see Note [default priority]
 /-- A complete lattice is a bounded lattice which
   has suprema and infima for every subset. -/
 class complete_lattice (α : Type u) extends bounded_lattice α, has_Sup α, has_Inf α :=
@@ -43,6 +45,7 @@ class complete_lattice (α : Type u) extends bounded_lattice α, has_Sup α, has
 
 /-- A complete linear order is a linear order whose lattice structure is complete. -/
 class complete_linear_order (α : Type u) extends complete_lattice α, decidable_linear_order α
+end prio
 
 section
 variables [complete_lattice α] {s t : set α} {a b : α}
@@ -639,6 +642,10 @@ theorem infi_subtype {p : ι → Prop} {f : subtype p → α} : (⨅ x, f x) = (
 le_antisymm
   (le_infi $ assume i, le_infi $ assume : p i, infi_le _ _)
   (le_infi $ assume ⟨i, h⟩, infi_le_of_le i $ infi_le _ _)
+
+lemma infi_subtype' {p : ι → Prop} {f : ∀ i, p i → α} :
+  (⨅ i (h : p i), f i h) = (⨅ x : subtype p, f x.val x.property) :=
+(@infi_subtype _ _ _ p (λ x, f x.val x.property)).symm
 
 theorem supr_subtype {p : ι → Prop} {f : subtype p → α} : (⨆ x, f x) = (⨆ i (h:p i), f ⟨i, h⟩) :=
 le_antisymm

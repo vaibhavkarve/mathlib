@@ -31,7 +31,7 @@ Coercions into ℤ_p are set up to work with the `norm_cast` tactic.
 
 * [F. Q. Gouêva, *p-adic numbers*][gouvea1997]
 * [R. Y. Lewis, *A formal proof of Hensel's lemma over the p-adic integers*][lewis2019]
-* https://en.wikipedia.org/wiki/P-adic_number
+* <https://en.wikipedia.org/wiki/P-adic_number>
 
 ## Tags
 
@@ -139,7 +139,7 @@ instance : normed_ring ℤ_[p] :=
 instance padic_norm_z.is_absolute_value : is_absolute_value (λ z : ℤ_[p], ∥z∥) :=
 { abv_nonneg := norm_nonneg,
   abv_eq_zero := λ ⟨_, _⟩, by simp [norm_eq_zero, padic_int.zero_def],
-  abv_add := λ ⟨_,_⟩ ⟨_, _⟩, norm_triangle _ _,
+  abv_add := λ ⟨_,_⟩ ⟨_, _⟩, norm_add_le _ _,
   abv_mul := λ _ _, by unfold norm; simp [padic_norm_z] }
 
 protected lemma padic_int.pmul_comm : ∀ z1 z2 : ℤ_[p], z1*z2 = z2*z1
@@ -189,7 +189,7 @@ theorem nonarchimedean : ∀ (q r : ℤ_[p]), ∥q + r∥ ≤ max (∥q∥) (∥
 theorem add_eq_max_of_ne : ∀ {q r : ℤ_[p]}, ∥q∥ ≠ ∥r∥ → ∥q+r∥ = max (∥q∥) (∥r∥)
 | ⟨_, _⟩ ⟨_, _⟩ := padic_norm_e.add_eq_max_of_ne
 
-@[simp] lemma norm_one : ∥(1 : ℤ_[p])∥ = 1 := norm_one
+@[simp] lemma norm_one : ∥(1 : ℤ_[p])∥ = 1 := normed_field.norm_one
 
 lemma eq_of_norm_add_lt_right {z1 z2 : ℤ_[p]}
   (h : ∥z1 + z2∥ < ∥z2∥) : ∥z1∥ = ∥z2∥ :=

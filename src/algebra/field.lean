@@ -9,15 +9,27 @@ open set
 universe u
 variables {α : Type u}
 
--- Default priority sufficient as core version has custom-set lower priority (100)
 /-- Core version `division_ring_has_div` erratically requires two instances of `division_ring` -/
+-- priority 900 sufficient as core version has custom-set lower priority (100)
+@[priority 900] -- see Note [lower instance priority]
 instance division_ring_has_div' [division_ring α] : has_div α := ⟨algebra.div⟩
 
+@[priority 100] -- see Note [lower instance priority]
 instance division_ring.to_domain [s : division_ring α] : domain α :=
 { eq_zero_or_eq_zero_of_mul_eq_zero := λ a b h,
     classical.by_contradiction $ λ hn,
       division_ring.mul_ne_zero (mt or.inl hn) (mt or.inr hn) h
   ..s }
+
+@[simp] theorem inv_one [division_ring α] : (1⁻¹ : α) = 1 := by rw [inv_eq_one_div, one_div_one]
+
+@[simp] theorem inv_inv' [discrete_field α] (x : α) : x⁻¹⁻¹ = x :=
+if h : x = 0
+then by rw [h, inv_zero, inv_zero]
+else division_ring.inv_inv h
+
+lemma inv_involutive' [discrete_field α] : function.involutive (has_inv.inv : α → α) :=
+inv_inv'
 
 namespace units
 variables [division_ring α] {a b : α}
@@ -39,7 +51,7 @@ def mk0 (a : α) (ha : a ≠ 0) : units α :=
 @[simp] lemma mk0_coe (u : units α) (h : (u : α) ≠ 0) : mk0 (u : α) h = u :=
 units.ext rfl
 
-@[simp] lemma units.mk0_inj {a b : α} (ha : a ≠ 0) (hb : b ≠ 0) :
+@[simp] lemma mk0_inj {a b : α} (ha : a ≠ 0) (hb : b ≠ 0) :
   units.mk0 a ha = units.mk0 b hb ↔ a = b :=
 ⟨λ h, by injection h, λ h, units.ext h⟩
 
@@ -112,6 +124,7 @@ lemma div_eq_iff_mul_eq (hb : b ≠ 0) : a / b = c ↔ c * b = a :=
 
 end division_ring
 
+@[priority 100] -- see Note [lower instance priority]
 instance field.to_integral_domain [F : field α] : integral_domain α :=
 { ..F, ..division_ring.to_domain }
 

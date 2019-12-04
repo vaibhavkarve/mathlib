@@ -12,6 +12,8 @@ open topological_space
 
 universes u v w u'
 
+section prio
+set_option default_priority 100 -- see Note [default priority]
 /-- A topological semimodule, over a semiring which is also a topological space, is a
 semimodule in which scalar multiplication is continuous. In applications, α will be a topological
 semiring and β a topological additive semigroup, but this is not needed for the definition -/
@@ -20,6 +22,7 @@ class topological_semimodule (α : Type u) (β : Type v)
   [topological_space β] [add_comm_monoid β]
   [semimodule α β] : Prop :=
 (continuous_smul : continuous (λp : α × β, p.1 • p.2))
+end prio
 
 section
 
@@ -37,6 +40,8 @@ continuous_smul'.comp (hf.prod_mk hg)
 
 end
 
+section prio
+set_option default_priority 100 -- see Note [default priority]
 /-- A topological module, over a ring which is also a topological space, is a module in which
 scalar multiplication is continuous. In applications, α will be a topological ring and β a
 topological additive group, but this is not needed for the definition -/
@@ -46,12 +51,14 @@ class topological_module (α : Type u) (β : Type v)
   [module α β]
   extends topological_semimodule α β : Prop
 
+/-- A topological vector space is a topological module over a field. -/
 class topological_vector_space (α : Type u) (β : Type v)
   [discrete_field α] [topological_space α]
   [topological_space β] [add_comm_group β] [vector_space α β]
   extends topological_module α β
+end prio
 
-/- Continuous linear maps between modules. Only put the type classes that are necessary for the
+/-- Continuous linear maps between modules. We only put the type classes that are necessary for the
 definition, although in applications β and γ will be topological modules over the topological
 ring α -/
 structure continuous_linear_map
@@ -84,7 +91,7 @@ protected lemma continuous (f : β →L[α] γ) : continuous f := f.2
 /-- Coerce continuous linear maps to functions. -/
 instance to_fun : has_coe_to_fun $ β →L[α] γ := ⟨_, λ f, f.to_fun⟩
 
-@[extensionality] theorem ext {f g : β →L[α] γ} (h : ∀ x, f x = g x) : f = g :=
+@[ext] theorem ext {f g : β →L[α] γ} (h : ∀ x, f x = g x) : f = g :=
 by cases f; cases g; congr' 1; ext x; apply h
 
 theorem ext_iff {f g : β →L[α] γ} : f = g ↔ ∀ x, f x = g x :=
@@ -124,17 +131,19 @@ instance : has_one (β →L[α] β) := ⟨id⟩
 @[simp, elim_cast] lemma coe_id : ((id : β →L[α] β) : β →ₗ[α] β) = linear_map.id := rfl
 @[simp, elim_cast] lemma coe_id' : ((id : β →L[α] β) : β → β) = _root_.id := rfl
 
+@[simp] lemma one_apply : (1 : β →L[α] β) x = x := rfl
+
 section add
 variables [topological_add_group γ]
 
 instance : has_add (β →L[α] γ) :=
-⟨λ f g, ⟨f + g, continuous_add f.2 g.2⟩⟩
+⟨λ f g, ⟨f + g, f.2.add g.2⟩⟩
 
 @[simp] lemma add_apply : (f + g) x = f x + g x := rfl
 @[simp, move_cast] lemma coe_add : (((f + g) : β →L[α] γ) : β →ₗ[α] γ) = (f : β →ₗ[α] γ) + g := rfl
 @[move_cast] lemma coe_add' : (((f + g) : β →L[α] γ) : β → γ) = (f : β → γ) + g := rfl
 
-instance : has_neg (β →L[α] γ) := ⟨λ f, ⟨-f, continuous_neg f.2⟩⟩
+instance : has_neg (β →L[α] γ) := ⟨λ f, ⟨-f, f.2.neg⟩⟩
 
 @[simp] lemma neg_apply : (-f) x = - (f x) := rfl
 
@@ -172,7 +181,7 @@ instance [topological_add_group β] : ring (β →L[α] β) :=
 
 /-- The cartesian product of two bounded linear maps, as a bounded linear map. -/
 def prod (f₁ : β →L[α] γ) (f₂ : β →L[α] δ) : β →L[α] (γ × δ) :=
-{ cont := continuous.prod_mk f₁.2 f₂.2,
+{ cont := f₁.2.prod_mk f₂.2,
   ..f₁.to_linear_map.prod f₂.to_linear_map }
 
 end general_ring
@@ -194,11 +203,28 @@ variables (c : α) (f g : β →L[α] γ) (x y z : β)
 @[simp, move_cast] lemma coe_apply : (((c • f) : β →L[α] γ) : β →ₗ[α] γ) = c • (f : β →ₗ[α] γ) := rfl
 @[move_cast] lemma coe_apply' : (((c • f) : β →L[α] γ) : β → γ) = c • (f : β → γ) := rfl
 
-/-- Associating to a scalar-valued linear map and an element of `γ` the
-`γ`-valued linear map obtained by multiplying the two (a.k.a. tensoring by `γ`) -/
-def scalar_prod_space_iso (c : β →L[α] α) (f : γ) : β →L[α] γ :=
+/-- The linear map `λ x, c x • f`.  Associates to a scalar-valued linear map and an element of
+`γ` the `γ`-valued linear map obtained by multiplying the two (a.k.a. tensoring by `γ`) -/
+def smul_right (c : β →L[α] α) (f : γ) : β →L[α] γ :=
 { cont := continuous_smul c.2 continuous_const,
-  ..c.to_linear_map.scalar_prod_space_iso f }
+  ..c.to_linear_map.smul_right f }
+
+@[simp]
+lemma smul_right_apply {c : β →L[α] α} {f : γ} {x : β} :
+  (smul_right c f : β → γ) x = (c : β → α) x • f :=
+rfl
+
+@[simp]
+lemma smul_right_one_one (c : α →L[α] γ) : smul_right 1 ((c : α → γ) 1) = c :=
+by ext; simp [-continuous_linear_map.map_smul, (continuous_linear_map.map_smul _ _ _).symm]
+
+@[simp]
+lemma smul_right_one_eq_iff {f f' : γ} :
+  smul_right (1 : α →L[α] α) f = smul_right 1 f' ↔ f = f' :=
+⟨λ h, have (smul_right (1 : α →L[α] α) f : α → γ) 1 = (smul_right (1 : α →L[α] α) f' : α → γ) 1,
+        by rw h,
+      by simp at this; assumption,
+  by cc⟩
 
 variable [topological_add_group γ]
 

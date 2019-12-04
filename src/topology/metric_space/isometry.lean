@@ -3,13 +3,18 @@ Copyright (c) 2018 Sébastien Gouëzel. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Isometries of emetric and metric spaces
 Authors: Sébastien Gouëzel
-We define isometries, i.e., maps between emetric spaces that preserve
-the edistance (on metric spaces, these are exactly the maps that preserve distances),
-and prove their basic properties. We also introduce isometric bijections.
 -/
 
 import topology.metric_space.basic
 topology.bounded_continuous_function analysis.normed_space.basic topology.opens
+
+/-!
+# Isometries
+
+We define isometries, i.e., maps between emetric spaces that preserve
+the edistance (on metric spaces, these are exactly the maps that preserve distances),
+and prove their basic properties. We also introduce isometric bijections.
+-/
 
 noncomputable theory
 
@@ -67,14 +72,8 @@ assume x y, calc
 /-- An isometry is an embedding -/
 theorem isometry.uniform_embedding (hf : isometry f) : uniform_embedding f :=
 begin
-  refine emetric.uniform_embedding_iff.2 ⟨_, _, _⟩,
-  { assume x y hxy,
-    have : edist (f x) (f y) = 0 := by simp [hxy],
-    have : edist x y = 0 :=
-      begin have A := hf x y, rwa this at A, exact eq.symm A end,
-    by simpa using this },
-  { rw emetric.uniform_continuous_iff,
-    assume ε εpos,
+  refine emetric.uniform_embedding_iff'.2 ⟨_, _⟩,
+  { assume ε εpos,
     existsi [ε, εpos],
     simp [hf.edist_eq] },
   { assume δ δpos,
@@ -133,6 +132,7 @@ instance : has_coe_to_fun (α ≃ᵢ β) := ⟨λ_, α → β, λe, e.to_equiv�
 
 lemma coe_eq_to_equiv (h : α ≃ᵢ β) (a : α) : h a = h.to_equiv a := rfl
 
+/-- The (bundled) homeomorphism associated to an isometric isomorphism. -/
 protected def to_homeomorph (h : α ≃ᵢ β) : α ≃ₜ β :=
 { continuous_to_fun  := (isometry_to_fun h).continuous,
   continuous_inv_fun := (isometry_inv_fun h).continuous,
@@ -145,14 +145,17 @@ lemma to_homeomorph_to_equiv (h : α ≃ᵢ β) :
   h.to_homeomorph.to_equiv = h.to_equiv :=
 by ext; refl
 
+/-- The identity isometry of a space. -/
 protected def refl (α : Type*) [emetric_space α] : α ≃ᵢ α :=
 { isometry_to_fun := isometry_id, isometry_inv_fun := isometry_id, .. equiv.refl α }
 
+/-- The composition of two isometric isomorphisms, as an isometric isomorphism. -/
 protected def trans (h₁ : α ≃ᵢ β) (h₂ : β ≃ᵢ γ) : α ≃ᵢ γ :=
 { isometry_to_fun  := h₂.isometry_to_fun.comp h₁.isometry_to_fun,
   isometry_inv_fun := h₁.isometry_inv_fun.comp h₂.isometry_inv_fun,
   .. equiv.trans h₁.to_equiv h₂.to_equiv }
 
+/-- The inverse of an isometric isomorphism, as an isometric isomorphism. -/
 protected def symm (h : α ≃ᵢ β) : β ≃ᵢ α :=
 { isometry_to_fun  := h.isometry_inv_fun,
   isometry_inv_fun := h.isometry_to_fun,
@@ -205,12 +208,22 @@ begin
   refl
 end
 
-namespace Kuratowski_embedding
-/- In this section, we show that any separable metric space can be embedded isometrically
-in ℓ^∞(ℝ) -/
+/-- In a normed algebra, the inclusion of the base field in the extended field is an isometry. -/
+lemma algebra_map_isometry (𝕜 : Type*) (𝕜' : Type*) [normed_field 𝕜] [normed_ring 𝕜']
+  [h : normed_algebra 𝕜 𝕜'] : isometry (@algebra_map 𝕜 𝕜' _ _ _) :=
+begin
+  refine isometry_emetric_iff_metric.2 (λx y, _),
+  rw [dist_eq_norm, dist_eq_norm, ← algebra.map_sub, norm_algebra_map_eq],
+end
 
+/-- The space of bounded sequences, with its sup norm -/
 @[reducible] def ℓ_infty_ℝ : Type := bounded_continuous_function ℕ ℝ
 open bounded_continuous_function metric topological_space
+
+namespace Kuratowski_embedding
+
+/- In this section, we show that any separable metric space can be embedded isometrically
+in ℓ^∞(ℝ) -/
 
 variables {f g : ℓ_infty_ℝ} {n : ℕ} {C : ℝ} [metric_space α] (x : ℕ → α) (a b : α)
 
@@ -278,13 +291,16 @@ begin
     /- Use embedding_of_subset to construct the desired isometry -/
     exact ⟨embedding_of_subset x, embedding_of_subset_isometry x this⟩ }
 end
+end Kuratowski_embedding
+
+open topological_space Kuratowski_embedding
 
 /-- The Kuratowski embedding is an isometric embedding of a separable metric space in ℓ^∞(ℝ) -/
 def Kuratowski_embedding (α : Type u) [metric_space α] [separable_space α] : α → ℓ_infty_ℝ :=
-  classical.some (exists_isometric_embedding α)
+  classical.some (Kuratowski_embedding.exists_isometric_embedding α)
 
 /-- The Kuratowski embedding is an isometry -/
-lemma Kuratowski_embedding_isometry (α : Type u) [metric_space α] [separable_space α] :
+protected lemma Kuratowski_embedding.isometry (α : Type u) [metric_space α] [separable_space α] :
   isometry (Kuratowski_embedding α) :=
 classical.some_spec (exists_isometric_embedding α)
 
@@ -298,7 +314,5 @@ begin
     have A : Kuratowski_embedding α x ∈ range (Kuratowski_embedding α) := ⟨x, by simp⟩,
     apply ne_empty_of_mem A },
   { rw ← image_univ,
-    exact compact_image compact_univ (Kuratowski_embedding_isometry α).continuous },
+    exact compact_image compact_univ (Kuratowski_embedding.isometry α).continuous },
 end⟩
-
-end Kuratowski_embedding --namespace
