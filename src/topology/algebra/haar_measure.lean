@@ -21,26 +21,57 @@ Alfsen, E. M. A simplified constructive proof of the existence and uniqueness of
 
 -/
 
+noncomputable theory
+
+open_locale classical topological_space
+
 variables {G : Type*}
-variables [group G] [topological_space G] [topological_group G] [locally_compact_space G]
+variables [group G] [topological_space G]
 
 namespace measure_theory
+namespace measure
 
-lemma is_measurable_mul_left (g : G) :
-  measurable ((*) g : G → G) :=
-measureable_of_continuous _
+/-- A measure `μ` on a topological group is left invariant if
+for all measurable sets `s` and all `g`, we have `μ (gs) = μ s`,
+where `gs` denotes the translate of `s` by left multiplication with `g`. -/
+@[to_additive is_left_add_invariant]
+def is_left_invariant (μ : measure G) : Prop :=
+∀ s : set G, is_measurable s → ∀ g : G,  μ ((*) g '' s) = μ s
 
-def left_translate (μ : measure G) (g : G) : measure G :=
-{ measure_of := λ s, μ ((*) g '' s),
-  empty := by { suffices : (*) g '' ∅ = ∅, { rw [this, measure_empty] }, ext, simp, },
-  mono := λ s₁ s₂ h, measure_mono $ by { rintro _ ⟨x, hx, rfl⟩, exact ⟨_, h hx, rfl⟩ },
-  Union_nat := λ f,
-  begin
-    sorry
-    -- suggest,
-  end,
-  m_Union := λ f, _,
-  trimmed := _ }
+end measure
 
+namespace haar_measure_construction
+open lattice
+variables [topological_group G] [locally_compact_space G]
+
+/-- `index_prop S T` is a predicate
+asserting that `T` is covered by finitely many left-translates of `S`. -/
+lemma index_prop (S T : set G) (hS : S ∈ 𝓝 (1:G)) (hT : compact T) :
+  ∃ n, ∃ f : fin n → G, T ⊆ supr (λ i : fin n, (*) (f i) '' S) :=
+begin
+  choose U hU using mem_nhds_sets_iff.1 hS,
+  let ι : G → set G := λ g, (*) g '' U,
+  have hι : ∀ g : G, g ∈ (set.univ : set G) → is_open (ι g),
+  { intros g hg,
+    show is_open ((*) g '' U),
+    rw show ((*) g '' U) = (*) g⁻¹ ⁻¹' U,
+    { ext, exact mem_left_coset_iff g },
+    apply continuous_mul_left g⁻¹,
+    exact hU.2.1 },
+  have := compact_elim_finite_subcover_image hT hι _,
+  all_goals {sorry}
+end
+
+def index (S T : set G) (hS : S ∈ 𝓝 (1:G)) (hT : compact T) : ℕ :=
+nat.find (index_prop S T hS hT)
+
+-- local notation `[`T`:`S`]` := index S T
+
+variables (A : set G) (hA : compact A)
+def prehaar_of_compact (K : set G) (hK : compact K) : _ := _
+
+end haar_measure_construction
 
 end measure_theory
+
+#lint
