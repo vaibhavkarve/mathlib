@@ -26,16 +26,21 @@ variables [group G] [topological_space G] [topological_group G] [locally_compact
 
 namespace measure_theory
 
+lemma is_measurable_mul_left (g : G) :
+  measurable ((*) g : G → G) :=
+measureable_of_continuous _
+
 def left_translate (μ : measure G) (g : G) : measure G :=
 { measure_of := λ s, μ ((*) g '' s),
   empty := by { suffices : (*) g '' ∅ = ∅, { rw [this, measure_empty] }, ext, simp, },
   mono := λ s₁ s₂ h, measure_mono $ by { rintro _ ⟨x, hx, rfl⟩, exact ⟨_, h hx, rfl⟩ },
   Union_nat := λ f,
   begin
-    library_search
+    sorry
+    -- suggest,
   end,
-  m_Union := sorry,
-  trimmed := sorry }
+  m_Union := λ f, _,
+  trimmed := _ }
 
 
 end measure_theory
