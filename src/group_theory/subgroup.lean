@@ -679,6 +679,22 @@ begin
   exact mem_conjugates_of_set_iff.2 ⟨a, h₁, is_conj_trans h₂ ⟨c,rfl⟩⟩,
 end
 
+def conjugate_set (x : α) (H : set α) : set α :=
+(λ n, x⁻¹ * n * x) ⁻¹' H
+
+lemma conjugate_set_eq_image (H : set α) (x : α) :
+  conjugate_set x H = (λ n, x * n * x⁻¹) '' H :=
+eq.symm (congr_fun (set.image_eq_preimage_of_inverse
+  (λ _, by simp [_root_.mul_assoc]) (λ _, by simp [_root_.mul_assoc])) _)
+
+lemma conjugate_set_eq_preimage (H : set α) (x : α) :
+  conjugate_set x H = (λ n, x⁻¹ * n * x) ⁻¹' H := rfl
+
+lemma conjugate_set_normal_subgroup (H : set α) [normal_subgroup H] (x : α) :
+  conjugate_set x H = H :=
+set.ext (λ n, ⟨λ h : _ ∈ H, by simpa [_root_.mul_assoc] using normal_subgroup.normal _ h x,
+λ h, show _ ∈ H, by simpa using normal_subgroup.normal _ h (x⁻¹)⟩)
+
 /-- The normal closure of a set s is the subgroup closure of all the conjugates of
 elements of s. It is the smallest normal subgroup containing s. -/
 def normal_closure (s : set α) : set α := closure (conjugates_of_set s)

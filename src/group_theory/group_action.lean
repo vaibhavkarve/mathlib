@@ -78,6 +78,12 @@ def comp_hom [monoid γ] (g : γ → α) [is_monoid_hom g] :
   one_smul := by simp [is_monoid_hom.map_one g, mul_action.one_smul],
   mul_smul := by simp [is_monoid_hom.map_mul g, mul_action.mul_smul] }
 
+class is_sub_mul_action (α : Type*) (β : Type*) [monoid α] [mul_action α β] (s : set β) : Prop :=
+(smul_mem : ∀ (x : β) (r : α), x ∈ s → r • x ∈ s)
+
+instance subtype.mul_action (s : set β) [is_sub_mul_action α β s] : mul_action α s :=
+by subtype_instance
+
 end mul_action
 
 namespace mul_action
@@ -166,6 +172,12 @@ instance (H : set α) [is_subgroup H] : mul_action α (quotient H) :=
 instance mul_left_cosets_comp_subtype_val (H I : set α) [is_subgroup H] [is_subgroup I] :
   mul_action I (quotient H) :=
 mul_action.comp_hom (quotient H) (subtype.val : I → α)
+
+def conjugate_set_action : mul_action α (set α) :=
+{ to_has_scalar := { smul := group.conjugate_set },
+  one_smul := λ _, show group.conjugate_set _ _ = _, by simp [group.conjugate_set, set.preimage],
+  mul_smul := λ _ _ _ ,show group.conjugate_set _ _ = _, by simp [group.conjugate_set, set.preimage,
+    mul_assoc] }
 
 end mul_action
 
