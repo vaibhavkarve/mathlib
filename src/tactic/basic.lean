@@ -1,13 +1,13 @@
 import
   tactic.alias
   tactic.cache
+  tactic.clear
   tactic.converter.interactive
   tactic.core
-  tactic.doc_blame
   tactic.ext
   tactic.generalize_proofs
   tactic.interactive
-  tactic.library_search
+  tactic.suggest
   tactic.lift
   tactic.localized
   tactic.mk_iff_of_inductive_prop
@@ -16,8 +16,9 @@ import
   tactic.replacer
   tactic.restate_axiom
   tactic.rewrite
-  tactic.sanity_check
+  tactic.lint
   tactic.simpa
+  tactic.simps
   tactic.split_ifs
   tactic.squeeze
   tactic.well_founded_tactics

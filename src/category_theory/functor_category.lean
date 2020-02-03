@@ -23,7 +23,7 @@ this is another small category at that level.
 However if `C` and `D` are both large categories at the same universe level,
 this is a small category at the next higher level.
 -/
-instance functor.category : category.{(max (u₁+1) v₂)} (C ⥤ D) :=
+instance functor.category : category.{(max u₁ v₂)} (C ⥤ D) :=
 { hom     := λ F G, nat_trans F G,
   id      := λ F, nat_trans.id F,
   comp    := λ _ _ _ α β, vcomp α β }
@@ -53,10 +53,11 @@ congr_fun (congr_arg app (T.naturality f)) Z
 /-- `hcomp α β` is the horizontal composition of natural transformations. -/
 def hcomp {H I : D ⥤ E} (α : F ⟶ G) (β : H ⟶ I) : (F ⋙ H) ⟶ (G ⋙ I) :=
 { app         := λ X : C, (β.app (F.obj X)) ≫ (I.map (α.app X)),
-  naturality' := begin
-                   intros, rw [functor.comp_map, functor.comp_map, assoc_symm, naturality, assoc],
-                   rw [← map_comp I, naturality, map_comp, assoc]
-                 end }
+  naturality' := λ X Y f,
+  begin
+    rw [functor.comp_map, functor.comp_map, ←assoc, naturality, assoc,
+        ←map_comp I, naturality, map_comp, assoc]
+  end }
 
 infix ` ◫ `:80 := hcomp
 
@@ -70,7 +71,7 @@ infix ` ◫ `:80 := hcomp
 
 lemma exchange {I J K : D ⥤ E} (α : F ⟶ G) (β : G ⟶ H)
   (γ : I ⟶ J) (δ : J ⟶ K) : (α ≫ β) ◫ (γ ≫ δ) = (α ◫ γ) ≫ (β ◫ δ) :=
-by { ext, dsimp, rw [assoc, assoc, map_comp, assoc_symm (δ.app _), ← naturality, assoc] }
+by { ext, dsimp, rw [assoc, assoc, map_comp, ←assoc _ (δ.app _), ← naturality, assoc] }
 
 end nat_trans
 open nat_trans

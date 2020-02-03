@@ -7,9 +7,9 @@ import algebra.category.Mon.basic
 import category_theory.limits.limits
 
 /-!
-We build colimits of monoids.
+# The category of monoids has all colimits.
 
-We do so knowing nothing about monoids.
+We do this construction knowing nothing about monoids.
 In particular, I want to claim that this file could be produced by a python script
 that just looks at the output of `#print monoid`:
 
@@ -25,6 +25,9 @@ and if we'd fed it the output of `#print comm_ring`, this file would instead bui
 colimits of commutative rings.
 
 A slightly bolder claim is that we could do this with tactics, as well.
+
+Because this file is "pre-automated", it doesn't meet current documentation standards.
+Hopefully eventually most of it will be automatically synthesised.
 -/
 
 universes v
@@ -38,7 +41,7 @@ variables {J : Type v} [small_category J] (F : J ⥤ Mon.{v})
 
 inductive prequotient
 -- There's always `of`
-| of : Π (j : J) (x : (F.obj j).α), prequotient
+| of : Π (j : J) (x : F.obj j), prequotient
 -- Then one generator for each operation
 | one {} : prequotient
 | mul : prequotient → prequotient → prequotient
@@ -51,9 +54,9 @@ inductive relation : prequotient F → prequotient F → Prop
 | symm : Π (x y) (h : relation x y), relation y x
 | trans : Π (x y z) (h : relation x y) (k : relation y z), relation x z
 -- There's always a `map` relation
-| map : Π (j j' : J) (f : j ⟶ j') (x : (F.obj j).α), relation (of j' ((F.map f) x)) (of j x)
+| map : Π (j j' : J) (f : j ⟶ j') (x : F.obj j), relation (of j' ((F.map f) x)) (of j x)
 -- Then one relation per operation, describing the interaction with `of`
-| mul : Π (j) (x y : (F.obj j).α), relation (of j (x * y)) (mul (of j x) (of j y))
+| mul : Π (j) (x y : F.obj j), relation (of j (x * y)) (mul (of j x) (of j y))
 | one : Π (j), relation (of j 1) one
 -- Then one relation per argument of each operation
 | mul_1 : Π (x x' y) (r : relation x x'), relation (mul x y) (mul x' y)
@@ -126,24 +129,13 @@ instance monoid_colimit_type : monoid (colimit_type F) :=
 
 def colimit : Mon := ⟨colimit_type F, by apply_instance⟩
 
-def cocone_fun (j : J) (x : (F.obj j).α) : colimit_type F :=
+def cocone_fun (j : J) (x : F.obj j) : colimit_type F :=
 quot.mk _ (of j x)
 
-instance cocone_is_hom (j : J) : is_monoid_hom (cocone_fun F j) :=
-{ map_one :=
-  begin
-    apply quot.sound,
-    apply relation.one,
-  end,
-  map_mul := λ x y,
-  begin
-    apply quot.sound,
-    apply relation.mul,
-  end }
-
 def cocone_morphism (j : J) : F.obj j ⟶ colimit F :=
-{ val := cocone_fun F j,
-  property := by apply_instance }
+{ to_fun := cocone_fun F j,
+  map_one' := quot.sound (relation.one _ _),
+  map_mul' := λ x y, quot.sound (relation.mul _ _ _) }
 
 @[simp] lemma cocone_naturality {j j' : J} (f : j ⟶ j') :
   F.map f ≫ (cocone_morphism F j') = cocone_morphism F j :=
@@ -180,7 +172,7 @@ begin
     -- trans
     { exact eq.trans r_ih_h r_ih_k },
     -- map
-    { rw cocone.naturality_bundled, },
+    { rw cocone.naturality_concrete, },
     -- mul
     { rw is_monoid_hom.map_mul ⇑((s.ι).app r_j) },
     -- one
@@ -197,19 +189,10 @@ begin
     { rw mul_one, } }
 end
 
-instance desc_fun_is_morphism (s : cocone F) : is_monoid_hom (desc_fun F s) :=
-{ map_one := rfl,
-  map_mul := λ x y,
-  begin
-    induction x, induction y,
-    refl,
-    refl,
-    refl,
-  end, }
-
 @[simp] def desc_morphism (s : cocone F) : colimit F ⟶ s.X :=
-{ val := desc_fun F s,
-  property := by apply_instance }
+{ to_fun := desc_fun F s,
+  map_one' := rfl,
+  map_mul' := λ x y, by { induction x; induction y; refl }, }
 
 def colimit_is_colimit : is_colimit (colimit_cocone F) :=
 { desc := λ s, desc_morphism F s,

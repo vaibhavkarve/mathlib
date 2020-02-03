@@ -124,9 +124,12 @@ namespace units
 
 variables (α : Type u) [monoid α]
 
+/--
+The units in a monoid are (multiplicatively) equivalent to
+the automorphisms of `star` when we think of the monoid as a single-object category. -/
 def to_Aut : units α ≃* Aut (single_obj.star α) :=
 (units.map_equiv (single_obj.to_End α)).trans $
-  Aut.units_End_eqv_Aut _
+  Aut.units_End_equiv_Aut _
 
 @[simp] lemma to_Aut_hom (x : units α) : (to_Aut α x).hom = single_obj.to_End α x := rfl
 @[simp] lemma to_Aut_inv (x : units α) :
@@ -141,10 +144,10 @@ open category_theory
 /-- The fully faithful functor from `Mon` to `Cat`. -/
 def to_Cat : Mon ⥤ Cat :=
 { obj := λ x, Cat.of (single_obj x),
-  map := λ x y f, (Mon.hom_equiv_monoid_hom x y).trans (single_obj.map_hom x y) f }
+  map := λ x y f, single_obj.map_hom x y f }
 
 instance to_Cat_full : full to_Cat :=
-{ preimage := λ x y, ((Mon.hom_equiv_monoid_hom x y).trans (single_obj.map_hom x y)).inv_fun,
+{ preimage := λ x y, (single_obj.map_hom x y).inv_fun,
   witness' := λ x y, by apply equiv.right_inv }
 
 instance to_Cat_faithful : faithful to_Cat :=

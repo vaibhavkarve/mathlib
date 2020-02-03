@@ -23,7 +23,7 @@ open topological_space
 open opposite
 open category_theory.category category_theory.functor
 
-variables (C : Type u) [𝒞 : category.{v+1} C]
+variables (C : Type u) [𝒞 : category.{v} C]
 include 𝒞
 
 local attribute [tidy] tactic.op_induction'
@@ -55,7 +55,7 @@ structure hom (X Y : PresheafedSpace.{v} C) :=
 (f : (X : Top.{v}) ⟶ (Y : Top.{v}))
 (c : Y.𝒪 ⟶ f _* X.𝒪)
 
-@[extensionality] lemma ext {X Y : PresheafedSpace.{v} C} (α β : hom X Y)
+@[ext] lemma ext {X Y : PresheafedSpace.{v} C} (α β : hom X Y)
   (w : α.f = β.f) (h : α.c ≫ (whisker_right (nat_trans.op (opens.map_iso _ _ w).inv) X.𝒪) = β.c) :
   α = β :=
 begin
@@ -67,7 +67,7 @@ end
 
 def id (X : PresheafedSpace.{v} C) : hom X X :=
 { f := 𝟙 (X : Top.{v}),
-  c := ((functor.left_unitor _).inv) ≫ (whisker_right (nat_trans.op (opens.map_id _).hom) _) }
+  c := ((functor.left_unitor _).inv) ≫ (whisker_right (nat_trans.op (opens.map_id (X.to_Top)).hom) _) }
 
 def comp (X Y Z : PresheafedSpace.{v} C) (α : hom X Y) (β : hom Y Z) : hom X Z :=
 { f := α.f ≫ β.f,
@@ -90,7 +90,7 @@ instance category_of_PresheafedSpaces : category (PresheafedSpace.{v} C) :=
   begin
     ext1, swap,
     { dsimp, simp only [id_comp] },
-    { ext1 U,
+    { ext U,
       op_induction,
       cases U,
       dsimp,
@@ -100,7 +100,7 @@ instance category_of_PresheafedSpaces : category (PresheafedSpace.{v} C) :=
   begin
     ext1, swap,
     { dsimp, simp only [comp_id] },
-    { ext1 U,
+    { ext U,
       op_induction,
       cases U,
       dsimp,
@@ -131,7 +131,7 @@ instance {X Y : PresheafedSpace.{v} C} : has_coe (X ⟶ Y) (X.to_Top ⟶ Y.to_To
 
 lemma id_c (X : PresheafedSpace.{v} C) :
   ((𝟙 X) : X ⟶ X).c =
-  (((functor.left_unitor _).inv) ≫ (whisker_right (nat_trans.op (opens.map_id _).hom) _)) := rfl
+  (((functor.left_unitor _).inv) ≫ (whisker_right (nat_trans.op (opens.map_id (X.to_Top)).hom) _)) := rfl
 
 -- Implementation note: this harmless looking lemma causes deterministic timeouts,
 -- but happily we can survive without it.
@@ -160,7 +160,7 @@ variables {C}
 
 namespace category_theory
 
-variables {D : Type u} [𝒟 : category.{v+1} D]
+variables {D : Type u} [𝒟 : category.{v} D]
 include 𝒟
 
 local attribute [simp] presheaf.pushforward
@@ -178,7 +178,7 @@ def map_presheaf (F : C ⥤ D) : PresheafedSpace.{v} C ⥤ PresheafedSpace.{v} D
   begin
     ext1, swap,
     { refl },
-    { ext1,
+    { ext,
       dsimp,
       simp only [presheaf.pushforward, eq_to_hom_map, map_id, comp_id, id_c_app],
       refl }
@@ -209,12 +209,12 @@ def on_presheaf {F G : C ⥤ D} (α : F ⟶ G) : G.map_presheaf ⟶ F.map_preshe
 { app := λ X,
   { f := 𝟙 _,
     c := whisker_left X.𝒪 α ≫ ((functor.left_unitor _).inv) ≫
-           (whisker_right (nat_trans.op (opens.map_id _).hom) _) },
+           (whisker_right (nat_trans.op (opens.map_id X.to_Top).hom) _) },
   naturality' := λ X Y f,
   begin
     ext1, swap,
     { refl },
-    { ext1 U,
+    { ext U,
       op_induction,
       cases U,
       dsimp,
