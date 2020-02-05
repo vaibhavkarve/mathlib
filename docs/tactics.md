@@ -211,7 +211,7 @@ An improved version of the standard `clear` tactic. `clear` is sensitive to the
 order of its arguments: `clear x y` may fail even though both `x` and `y` could
 be cleared (if the type of `y` depends on `x`). `clear'` lifts this limitation.
 
-```
+```lean
 example {α} {β : α → Type} (a : α) (b : β a) : unit :=
 begin
   try { clear a b }, -- fails since `b` depends on `a`
@@ -227,7 +227,7 @@ end
 A variant of `clear'` which clears not only the given hypotheses, but also any
 other hypotheses depending on them.
 
-```
+```lean
 example {α} {β : α → Type} (a : α) (b : β a) : unit :=
 begin
   try { clear' a },  -- fails since `b` depends on `a`
@@ -481,7 +481,7 @@ current goal by applying a lemma from the library, then discharging any new goal
 
 Typical usage is:
 
-```
+```lean
 example (n m k : ℕ) : n * (m - k) = n * m - n * k :=
 by library_search -- exact nat.mul_sub_left_distrib n m k
 ```
@@ -624,7 +624,7 @@ lemma my_collection.ext (a b : my_collection)
 
 Attribute `ext` can be applied to a structure to generate its extensionality lemma:
 
-```
+```lean
 @[ext]
 structure foo (α : Type*) :=
 (x y : ℕ)
@@ -635,7 +635,7 @@ structure foo (α : Type*) :=
 
 will generate:
 
-```
+```lean
 @[ext] lemma foo.ext : ∀ {α : Type u_1} (x y : foo α), x.x = y.x → x.y = y.y → x.z == y.z → x.k = y.k → x = y
 lemma foo.ext_iff : ∀ {α : Type u_1} (x y : foo α), x = y ↔ x.x = y.x ∧ x.y = y.y ∧ x.z == y.z ∧ x.k = y.k
 ```
@@ -1272,7 +1272,7 @@ sometimes confuse the tactic.
 
 As an example, in
 
-```
+```lean
 example (f : ℕ → Prop) (p : fin 3) (h0 : f 0) (h1 : f 1) (h2 : f 2) : f p.val :=
 begin
   fin_cases p; simp,

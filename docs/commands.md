@@ -21,7 +21,7 @@ not something to worry about. However, you may occasionally see strange error me
 mathlib commands: for instance, running these commands immediately after `import file.name` will
 produce an error. An easy solution is to run a built-in no-op command in between, for example:
 
-```
+```lean
 import data.nat.basic
 
 run_cmd tactic.skip -- this serves as a "barrier" between `import` and `#find`
@@ -209,13 +209,13 @@ note in the doc display.
 
 Syntax:
 
-```
+```lean
 library_note "note id" "note message"
 ```
 
 An example from `meta.expr`:
 
-```
+```lean
 library_note "open expressions"
 "Some declarations work with open expressions, i.e. an expr that has free variables.
 Terms will free variables are not well-typed, and one should not use them in tactics like
@@ -227,7 +227,7 @@ quicker than `mk_local_pis` (when applied to the type of all imported declaratio
 
 This note can be referenced near a usage of `pi_binders`:
 
-```
+```lean
 -- See Note [open expressions]
 /-- behavior of f -/
 def f := pi_binders ...
@@ -242,14 +242,14 @@ of a theorem or definition with different names.
 
 Syntax:
 
-```
+```lean
 /-- doc string -/
 alias my_theorem ← alias1 alias2 ...
 ```
 
 This produces defs or theorems of the form:
 
-```
+```lean
 /-- doc string -/
 @[alias] theorem alias1 : <type of my_theorem> := my_theorem
 
@@ -259,7 +259,7 @@ This produces defs or theorems of the form:
 
 Iff alias syntax:
 
-```
+```lean
 alias A_iff_B ↔ B_of_A A_of_B
 alias A_iff_B ↔ ..
 ```
