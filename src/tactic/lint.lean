@@ -233,20 +233,39 @@ return $ let illegal := [`gt, `ge] in if d.type.pi_codomain.contains_constant (�
   then some "the type contains ≥/>. Use ≤/< instead."
   else none
 
+meta def expr.app_name : expr → name
+| (app (const n _) _) := n
+| _ := name.anonymous
+
+meta def expr.is_bad_classical_app (e : expr) : bool :=
+e.app_name ∈ [`classical.prop_decidable, `classical.dec, `classical.dec_rel, `classical.dec_eq] ∧
+e.app_arg.has_var
+
+meta def expr.contains_subexpr (e : expr) (p : expr → Prop) [decidable_pred p] : bool :=
+e.fold ff (λ e' _ b, if p e' then tt else b)
+
+/- | `(classical.prop_decidable %%t) := t.has_local
+| `(classical.dec %%t) := t.has_local
+| `(classical.dec_rel %%p) := ff -/
+
 -- TODO: the commented out code also checks for classicality in statements, but needs fixing
 -- TODO: this probably needs to also check whether the argument is a variable or @eq <var> _ _
--- meta def illegal_constants_in_statement (d : declaration) : tactic (option string) :=
--- return $ if d.type.contains_constant (λ n, (n.get_prefix = `classical ∧
---   n.last ∈ ["prop_decidable", "dec", "dec_rel", "dec_eq"]) ∨ n ∈ [`gt, `ge])
--- then
---   let illegal1 := [`classical.prop_decidable, `classical.dec, `classical.dec_rel, `classical.dec_eq],
---       illegal2 := [`gt, `ge],
---       occur1 := illegal1.filter (λ n, d.type.contains_constant (eq n)),
---       occur2 := illegal2.filter (λ n, d.type.contains_constant (eq n)) in
---   some $ sformat!"the type contains the following declarations: {occur1 ++ occur2}." ++
---     (if occur1 = [] then "" else " Add decidability type-class arguments instead.") ++
---     (if occur2 = [] then "" else " Use ≤/< instead.")
--- else none
+meta def classical_decidability (d : declaration) : tactic (option string) :=
+return $
+if d.type.contains_subexpr (λ e, expr.is_bad_classical_app e)
+then
+  let illegal1 := [`classical.prop_decidable, `classical.dec, `classical.dec_rel, `classical.dec_eq],
+      occur1 := illegal1.filter (λ n, d.type.contains_constant (eq n)) in
+  some $ sformat!"the type contains illegal applications of the following declarations: {occur1}." ++
+    (if occur1 = [] then "" else " Add decidability type-class arguments instead.")
+else none
+
+@[linter, priority 1472] meta def linter.classical_decidability : linter :=
+{ test := classical_decidability,
+  no_errors_found := "Not using classical decidability in declarations",
+  errors_found := "USING CLASSICAL DECIDABILITY IN DECLARATIONS",
+  is_fast := ff }
+
 
 /-- A linter for checking whether illegal constants (≥, >) appear in a declaration's type. -/
 @[linter, priority 1470] meta def linter.ge_or_gt : linter :=
