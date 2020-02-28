@@ -19,7 +19,7 @@ meta inductive exprform
 | and : exprform → exprform → exprform
 
 /-- Intermediate shadow syntax for LNA formulas that includes non-canonical terms -/
-@[derive has_reflect]
+@[derive has_reflect, derive inhabited]
 inductive preform
 | eq  : preterm → preterm → preform
 | le  : preterm → preterm → preform
@@ -35,7 +35,7 @@ localized "notation p ` ∧* ` q := omega.nat.preform.and p q" in omega.nat
 
 namespace preform
 
-/-- Evaluate a preform into prop using the valuation v. -/
+/-- Evaluate a preform into prop using the valuation `v`. -/
 @[simp] def holds (v : nat → nat) : preform → Prop
 | (t =* s) := t.val v = s.val v
 | (t ≤* s) := t.val v ≤ s.val v
@@ -45,7 +45,7 @@ namespace preform
 
 end preform
 
-/-- univ_close p n := p closed by prepending n universal quantifiers -/
+/-- `univ_close p n` := `p` closed by prepending `n` universal quantifiers -/
 @[simp] def univ_close (p : preform) : (nat → nat) → nat → Prop
 | v 0     := p.holds v
 | v (k+1) := ∀ i : nat, univ_close (update_zero i v) k
@@ -126,11 +126,11 @@ def valid (p : preform) : Prop :=
 def sat (p : preform) : Prop :=
 ∃ v, holds v p
 
-/-- implies p q := under any valuation, q holds if p holds -/
+/-- `implies p q` := under any valuation, `q` holds if `p` holds -/
 def implies (p q : preform) : Prop :=
 ∀ v, (holds v p → holds v q)
 
-/-- equiv p q := under any valuation, p holds iff q holds -/
+/-- `equiv p q` := under any valuation, `p` holds iff `q` holds -/
 def equiv (p q : preform) : Prop :=
 ∀ v, (holds v p ↔ holds v q)
 

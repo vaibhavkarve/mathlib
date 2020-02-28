@@ -11,6 +11,7 @@ namespace omega
 /-- Shadow syntax of normalized terms. The first element
     represents the constant term and the list represents
     the coefficients. -/
+@[derive inhabited]
 def term : Type := int × list int
 
 namespace term

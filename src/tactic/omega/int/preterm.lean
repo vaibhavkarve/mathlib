@@ -22,7 +22,7 @@ meta inductive exprterm : Type
 /-- Similar to `exprterm`, except that all exprs are now replaced with
 de Brujin indices of type `nat`. This is akin to generalizing over
 the terms represented by the said exprs. -/
-@[derive has_reflect]
+@[derive has_reflect, derive inhabited]
 inductive preterm : Type
 | cst : int → preterm
 | var : int → nat → preterm

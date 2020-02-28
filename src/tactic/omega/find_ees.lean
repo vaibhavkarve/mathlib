@@ -19,6 +19,7 @@ namespace omega
     represents the constraint `0 < t`. `ees` is the sequence of equality
     elimination steps that have been used so far to obtain the current set of
     constraints. The list `ees` grows over time until `eqs` becomes empty. -/
+@[derive inhabited]
 structure ee_state :=
 (eqs : list term)
 (les : list term)

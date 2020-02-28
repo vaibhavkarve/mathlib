@@ -18,7 +18,7 @@ meta inductive exprform
 | and : exprform → exprform → exprform
 
 /-- Intermediate shadow syntax for LIA formulas that includes non-canonical terms -/
-@[derive has_reflect]
+@[derive has_reflect, derive inhabited]
 inductive preform
 | eq  : preterm → preterm → preform
 | le  : preterm → preterm → preform
