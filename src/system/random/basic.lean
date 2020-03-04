@@ -19,19 +19,23 @@ open list io applicative
 
 universes u v w
 
+/-- A monad to generate random objects using the generator type `g` -/
 @[reducible]
 def rand_g (g : Type) := state (ulift g)
+/-- A monad to generate random objects using the generator type `std_gen` -/
 @[reducible]
 def rand := rand_g std_gen
 
 instance (g : Type) : liftable (rand_g.{u} g) (rand_g.{v} g) :=
-@state_t.liftable' _ _ _ _ _ _ _ _ _  (equiv.ulift.trans.{u u u u u} equiv.ulift.symm)
+@state_t.liftable' _ _ _ _ _ _ _ (equiv.ulift.trans.{u u u u u} equiv.ulift.symm)
 
 open ulift
 
+/-- Generate one more `ℕ` -/
 def random.next {gen : Type} [random_gen gen] : rand_g gen ℕ :=
 ⟨ prod.map id up ∘ random_gen.next ∘ down ⟩
 
+/-- `range i j` is a number between `i` and `j` inclusively -/
 def range {α : Type u} [has_le α] (i j : α) :=
 { x : α // i ≤ x ∧ x ≤ j }
 
@@ -39,6 +43,7 @@ infix ` .. `:41 := range
 
 open stream
 
+/-- `random α` gives us machinery to generate values of type `α` -/
 class random (α : Type u) extends has_le α :=
 (random : Π (g : Type) [random_gen g], rand_g g α)
 (random_r : Π g [random_gen g] (x y : α),
@@ -56,10 +61,8 @@ by { introsI,
 
 namespace tactic.interactive
 
--- meta def time_in_nanos : tactic ℕ :=
--- do time ← tactic.unsafe_run_io (@io.cmd { cmd := "gdate", args := [ "+%s%N" ] } ),
---    pure time.to_nat
-
+/-- Some functions require a non-empty range as a parameter. This
+tactic checks that the range is non-empty -/
 meta def check_range : tactic unit :=
 assumption <|> do
 `[apply of_as_true, trivial]
@@ -70,6 +73,8 @@ export tactic.interactive (check_range)
 
 namespace io
 
+/-- on a platform with a `/dev/random` file to get random bytes from,
+get `n` bytes from it -/
 def read_dev_random (n : ℕ) : io (array n char) := do
 fh ← mk_file_handle "/dev/random" mode.read tt,
 buf ← fs.read fh n,
@@ -78,31 +83,37 @@ if h : buf.size = n
 then return (cast (by rw h) buf.to_array)
 else io.fail "wrong number of bytes read from /dev/random"
 
-def accum_char (w : ℕ) (c : char) : ℕ :=
+private def accum_char (w : ℕ) (c : char) : ℕ :=
 c.to_nat + 256 * w
 
+/-- create and a seed a random number generator -/
 def mk_generator : io std_gen := do
 x ← io.read_dev_random 8,
 return $ mk_std_gen (foldl accum_char 0 $ x.to_list : ℕ)
 
 variables {α : Type}
 
+/-- run `cmd` using the a randomly seeded random number generator -/
 def run_rand (cmd : _root_.rand α) : io α :=
 do g ← io.mk_generator,
    return $ (cmd.run ⟨g⟩).1
 
 variable [random α]
 
+/-- randomly generate a value of type α -/
 def random : io α :=
 io.run_rand (random.random α _)
 
+/-- randomly generate a value of type α between `x` and `y` -/
 def random_r (x y : α) (p : x ≤ y . check_range) : io (x .. y) :=
 io.run_rand (random.random_r _ x y p)
 
+/-- randomly generate an infinite series of value of type α -/
 def random_series : io (stream α) := do
 g ← io.mk_generator,
 return $ random.random_series _ _ g
 
+/-- randomly generate an infinite series of value of type α between `x` and `y` -/
 def random_series_r (x y : α) (h : x ≤ y . check_range) : io (stream $ x .. y) := do
 g ← io.mk_generator,
 return $ random.random_series_r _ x y h g
@@ -111,56 +122,39 @@ end io
 
 namespace tactic.interactive
 
+/-- create a seeded random number generator in the `tactic` monad -/
 meta def mk_generator : tactic std_gen := do
 tactic.unsafe_run_io @io.mk_generator
 
-meta def tactic' (α : Type u) : Type (max u 1) :=
-Π (β : Type), (α → tactic β) → tactic β
+-- meta def tactic' (α : Type u) : Type (max u 1) :=
+-- Π (β : Type), (α → tactic β) → tactic β
 
-meta def run_rand' {α : Type u} (cmd : rand α) (β : Type) (tac : α → tactic β)
-: tactic β := do
-g ← mk_generator,
-tac (cmd.run ⟨g⟩).1
+meta def run_rand {α : Type u} (cmd : rand α) : tactic α := do
+⟨g⟩ ← tactic.up mk_generator,
+return (cmd.run ⟨g⟩).1
 
-section random'
+section random
 
 variables {α : Type u}
 variable [random α]
 
-meta def random' : tactic' α :=
-run_rand' (random.random _ _)
-
-meta def random_r' (x y : α) (p : x ≤ y . check_range) : tactic' (x .. y) :=
-run_rand' (random.random_r _ x y p)
-
-meta def random_series' : tactic' (stream α)
- | β cmd := do
-g ← mk_generator,
-cmd $ random.random_series _ std_gen g
-
-meta def random_series_r' (x y : α) (h : x ≤ y . check_range) : tactic' (stream $ x .. y)
- | β cmd := do
-g ← mk_generator,
-cmd $ random.random_series_r std_gen x y h g
-
-end random'
-
-section random
-
-variable {α : Type}
-variable [random α]
-
+/-- use `random` in the `tactic` monad -/
 meta def random : tactic α :=
-random' _ return
+run_rand (_root_.random.random _ _)
 
+/-- use `random_r` in the `tactic` monad -/
 meta def random_r (x y : α) (p : x ≤ y . check_range) : tactic (x .. y) :=
-random_r' _ _ p _ return
+run_rand (random.random_r _ x y p)
 
-meta def random_series : tactic (stream α) :=
-random_series' _ return
+/-- use `random_series` in the `tactic` monad -/
+meta def random_series : tactic (stream α) := do
+⟨g⟩ ← tactic.up mk_generator,
+return $ random.random_series _ std_gen g
 
-meta def random_series_r (x y : α) (h : x ≤ y . check_range) : tactic (stream $ x .. y) :=
-random_series_r' _ _ h _ return
+/-- use `random_series_r` in the `tactic` monad -/
+meta def random_series_r (x y : α) (h : x ≤ y . check_range) : tactic (stream $ x .. y) := do
+⟨g⟩ ← tactic.up mk_generator,
+return $ random.random_series_r std_gen x y h g
 
 end random
 
@@ -177,31 +171,37 @@ def coerce (x y : bool) (p : x ≤ y) (i : bool) : x .. y := do
   if hx : x ≤ i ∧ i ≤ y
   then ⟨ i, hx ⟩
   else ⟨ x , le_refl x , p ⟩
+
 open ulift
 variables {gen : Type} [random_gen gen]
+
 protected def get_random : rand_g gen bool :=
 ⟨ prod.map id up ∘ @rand_bool gen _ ∘ down ⟩
 
+/-- generator for a series of bits -/
 structure bool_generator (g : Type) :=
   (next : bool)
   (queue : ℕ × ℕ)
   (gen : g)
 
+/-- create a `bool_generator` from `g` -/
 protected def first (g : gen) : bool_generator gen  :=
 let (r,g') := random_gen.next g in
 { next := r % 2 = 1
 , queue := (r / 2,30)
 , gen := g' }
 
+/-- get the next bit from a `bool_generator` -/
 protected def next : bool_generator gen → bool_generator gen
  | ⟨_,(_,0),g⟩ := bool.first g
  | ⟨_,(n,k),g⟩ := ⟨(n%2 = 1),(n/2,k-1),g⟩
 
-def random_series' (g : gen) : stream (bool_generator gen) :=
+protected def random_series_aux (g : gen) : stream (bool_generator gen) :=
 stream.iterate bool.next (bool.first g)
 
+/-- generate an infinite series of bits -/
 def random_series (g : gen) : stream bool :=
-stream.map bool.bool_generator.next $ random_series' g
+stream.map bool.bool_generator.next $ bool.random_series_aux g
 
 end bool
 
@@ -238,9 +238,10 @@ end stream
 
 variables {gen : Type} [random_gen gen]
 
+/-- generate a random bit vector of length `n` -/
 def bitvec.random (n : ℕ) : rand_g gen (bitvec n) :=
 ⟨ λ ⟨ g ⟩,
-let r := bool.random_series' g,
+let r := bool.random_series_aux g,
     v := map bool.bool_generator.next $ stream.approx n r in
 have Hv : length v = n,
      by { simp [stream.length_approx _ _], },
@@ -290,7 +291,9 @@ end coerce
 
 open nat
 
-def bitvec.coerce {n : ℕ} (x y : bitvec n) (P : x ≤ y)
+/-- if `i` is in the range `x .. y`, return `i`, otherwise, return
+an arbitrary element of `x .. y` -/
+protected def bitvec.coerce {n : ℕ} (x y : bitvec n) (P : x ≤ y)
   (i : bitvec n)
 : (x .. y) :=
 let x' := x.to_nat,
@@ -324,41 +327,18 @@ have Hy : bitvec.of_nat n r ≤ y,
   end,
 ⟨ bitvec.of_nat _ r , Hx , Hy ⟩
 
-def bitvec.random_series (n : ℕ) (g : gen) : stream (bitvec n) :=
+protected def bitvec.random_series (n : ℕ) (g : gen) : stream (bitvec n) :=
 stream.corec
 (λ s, ⟨ stream.approx n s, stream.length_approx _ _ ⟩)
 (stream.drop n)
 (@random.random_series bool _ gen _ g)
 
 instance random_bitvec (n : ℕ) : random (bitvec n) :=
-{ to_has_le := by apply_instance
-, random := λ _ inst, @bitvec.random _ inst n
-, random_r := λ _ inst x y p, bitvec.coerce _ _ p <$> @bitvec.random _ inst n
-, random_series := λ _ inst, @bitvec.random_series _ inst n
-, random_series_r := λ _ inst x y p g, bitvec.coerce _ _ p ∘ @bitvec.random_series _ inst n g }
-
--- example : true :=
--- begin
--- tactic.trace "\n\n",
--- (do x ← (tactic.interactive.random : tactic (bitvec 16)),
---     tactic.trace (x : bitvec 16).to_nat),
--- (do x ← (tactic.interactive.random_series),
---     tactic.trace $ map bitvec.to_nat (stream.approx 10 x : list (bitvec 16))),
--- (do x ← (tactic.interactive.random_series_r (25 : bitvec 15) 100),
---     tactic.trace $ map (bitvec.to_nat ∘ subtype.val) (stream.approx 10 x)),
--- trivial
--- end
-
--- meta def main [io.interface] : io unit := do
--- print_ln "\n\n",
--- x ← (io.random : io (bitvec 16)),
--- print_ln (x : bitvec 16).to_nat,
--- x ← io.random_series,
--- print_ln $ map bitvec.to_nat (stream.approx 10 x : list (bitvec 16)),
--- x ← (io.random_series_r (25 : bitvec 15) 100),
--- print_ln $ map (bitvec.to_nat ∘ subtype.val) (stream.approx 10 x)
-
--- run_cmd tactic.run_io @main
+{ to_has_le := by apply_instance,
+  random := λ _ inst, @bitvec.random _ inst n,
+  random_r := λ _ inst x y p, bitvec.coerce _ _ p <$> @bitvec.random _ inst n,
+  random_series := λ _ inst, @bitvec.random_series _ inst n,
+  random_series_r := λ _ inst x y p g, bitvec.coerce _ _ p ∘ @bitvec.random_series _ inst n g }
 
 open nat
 
@@ -434,8 +414,7 @@ parameters {x' : ℕ}
 parameters P' : x' ≤ y.val
 include P'
 
-lemma fin.interval_fits_in_word_size
-: x' + i' % (1 + (y.val - x')) < k :=
+lemma interval_fits_in_word_size : x' + i' % (1 + (y.val - x')) < k :=
 begin
   apply @lt_of_lt_of_le _ _ _ (x' + (y.val - x' + 1)),
   { apply add_lt_add_left, simp,

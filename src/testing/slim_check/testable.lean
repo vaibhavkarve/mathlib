@@ -139,13 +139,13 @@ instance pi_testable [has_to_string α] [arbitrary α] [∀ x, testable (β x)]
 : testable (Π x : α, β x) :=
 var_testable α β
 
+@[priority 100]
 instance de_testable {p : Prop} [decidable p] : testable p :=
 ⟨ λ min, return $ if h : p then success (psum.inr h) else failure h [] ⟩
 
 section io
 
 variable (p : Prop)
-variable [testable p]
 
 open nat
 
@@ -168,6 +168,8 @@ def give_up_once (x : ℕ) : test_result p → test_result p
  | (failure Hce xs) := failure Hce xs
 
 variable (p)
+
+variable [testable p]
 
 def testable.run_suite_aux (bound : ℕ) : test_result p → ℕ → rand (test_result p)
  | r 0 := return r
