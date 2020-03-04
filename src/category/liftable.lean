@@ -7,10 +7,10 @@ universes u₀ u₁ v₀ v₁ v₂ w w₀ w₁
 /-- Given a universe polymorphic functor `M.{u}`, this class helps move from
 `M.{u}` to `M.{v}` and back -/
 class liftable (f : Type u₀ → Type u₁) (g : Type v₀ → Type v₁) :=
-  (up {}   : Π {α β}, α ≃ β → f α → g β)
-  (down {} : Π {α β}, α ≃ β → g β → f α)
-  (up_down : ∀ {α β} (F : α ≃ β) (x : g β), up F (down F x) = x)
-  (down_up : ∀ {α β} (F : α ≃ β) (x : f α), down F (up F x) = x)
+(up {}   : Π {α β}, α ≃ β → f α → g β)
+(down {} : Π {α β}, α ≃ β → g β → f α)
+(up_down : ∀ {α β} (F : α ≃ β) (x : g β), up F (down F x) = x)
+(down_up : ∀ {α β} (F : α ≃ β) (x : f α), down F (up F x) = x)
 
 attribute [simp] liftable.up_down liftable.down_up
 
@@ -78,45 +78,3 @@ def reader_t.liftable' {s s' m m'}
 
 instance {s m m'} [liftable m m'] : liftable (reader_t s m) (reader_t (ulift s) m') :=
 reader_t.liftable' equiv.ulift.symm
-
--- namespace liftable
-
--- variables {f : Type (max u₀ w) → Type u₁} {g : Type (max (max u₀ w) v₀) → Type v₁}
--- variables [liftable f g] [functor g]
--- variable {α : Type w}
--- open functor
-
--- def up' (x : f (ulift.{u₀} α)) : g (ulift.{max u₀ v₀} α) :=
--- map (ulift.up ∘ ulift.down ∘ ulift.down) $ up x
-
--- def down' (x : g (ulift.{max u₀ v₀} α)) : f (ulift.{u₀} α) :=
--- down $ map (ulift.up ∘ ulift.up ∘ ulift.down) x
-
--- variables [is_lawful_functor g]
-
--- lemma up_down' : ∀ (x : g (ulift.{max u₀ v₀} α)), up' (down' x : f (ulift.{u₀} α)) = x :=
--- by intros; simp [up',down',map_map,function.comp,ulift.up_down]
-
--- lemma down_up' : ∀ (x : f (ulift.{u₀} α)), down' (up' x : g (ulift.{max u₀ v₀} α)) = x :=
--- by intros; simp [up',down',map_map,function.comp,ulift.up_down]
-
--- end liftable
-
-section trans
-open liftable
-
--- def liftable.trans
---     {f : Type u₀ → Type u₁}
---     {g : Type v₀ → Type v₁}
---     {h : Type w₀ → Type w₁}
---     [functor h] [is_lawful_functor h]
---     (_ : liftable f g)
---     (_ : liftable g h) :
---   liftable f h :=
--- by refine
---      { up := λ α β G, (up' : g (ulift α) → h (ulift.{max v₀ w} α)) ∘ (up : f α → g (ulift α)),
---        down := λ α β G, (down : g (ulift α) → f α) ∘ (down' : h (ulift.{max v₀ w} α) → g (ulift α)) ,
---        .. };
---      intros; simp [function.comp,up_down',down_up']
-
-end trans

@@ -5,9 +5,7 @@ import data.bitvec
 import data.list.basic
 import data.stream
 import tactic.cache
--- import util.data.list
 import data.fin
--- import util.meta.tactic
 
 import tactic.interactive
 import tactic.norm_num

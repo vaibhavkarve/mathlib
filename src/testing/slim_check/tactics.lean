@@ -1,30 +1,8 @@
 
 import testing.slim_check.testable
 
-namespace tactic.interactive
-open tactic slim_check
-
-meta def expect_failure (cmd : itactic) : tactic unit :=
-λ s, match cmd s with
-| (interaction_monad.result.exception msg _ s') :=
-  match msg with
-   | (some msg') := (trace (msg' ()) >> admit) s'
-   | none := admit s'
-  end
-| (interaction_monad.result.success a s) :=
-   mk_exception "success_if_fail combinator failed, given tactic succeeded" none s
-end
-
-
-meta def trace_error (cmd : itactic) : tactic unit :=
-λ s,
-let r := cmd s in
-match r with
-| (interaction_monad.result.exception a b s') :=
-(trace "\nBEGIN error" >> trace s' >> trace "END error"
-  >> interaction_monad.result.exception a b) s'
-| (interaction_monad.result.success a s) := r
-end
+namespace tactic
+open slim_check
 
 meta def applye (e : pexpr) : tactic unit := do
 () <$ (to_expr e >>= tactic.apply)
@@ -55,6 +33,8 @@ do tag ← tag,
 
 meta def trace_scope {α} (tac : tactic α) (n : name . synth_def_name) : tactic α :=
 trace_scope' (pure $ to_fmt "") tac n
+
+namespace interactive
 
 /-- build an instance of testable for the given proposition
   -/
@@ -99,9 +79,9 @@ match e with
        (  (applye ``(slim_check.test_forall_in_list _ _ %%var)  ; apply_instance)
          <|>
           (applye ``(slim_check.var_testable _ _ (some %%var)) ; apply_instance))
- | _ := trace_error $ tactic.applyc ``slim_check.de_testable
+ | _ := trace_error "is_testable" $ tactic.applyc ``slim_check.de_testable
 end)
-<|> trace_error (tactic.applyc ``slim_check.de_testable)
+<|> trace_error "is_testable" (tactic.applyc ``slim_check.de_testable)
 
 open slim_check.test_result nat
 
@@ -136,4 +116,5 @@ do unfreeze_local_instances,
       else trace ("Gave up " ++ repr n ++ " time(s)") >> admit
    end
 
-end tactic.interactive
+end interactive
+end tactic
