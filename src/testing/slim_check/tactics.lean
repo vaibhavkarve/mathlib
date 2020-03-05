@@ -4,37 +4,8 @@ import testing.slim_check.testable
 namespace tactic
 open slim_check
 
-meta def applye (e : pexpr) : tactic unit := do
+private meta def applye (e : pexpr) : tactic unit := do
 () <$ (to_expr e >>= tactic.apply)
-
-meta def synth_def_name : tactic unit :=
-do n ← decl_name,
-   tactic.exact `(n)
-
-meta def on_error {α} (tac : tactic α)
-  (hdlr : option (unit → format) → option pos → tactic unit) : tactic α
-| s := match tac s with
-       | x@(result.success _ _) := x
-       | (result.exception msg pos s') := (hdlr msg pos >> result.exception msg pos) s'
-       end
-
-meta def trace_scope' (tag : pformat) {α} (tac : tactic α) (n : name . synth_def_name) : tactic α :=
-do tag ← tag,
-   let tag := if ¬ tag.is_nil then format!"{n} ({tag})" else to_fmt n,
-   trace!"begin {tag}",
-   on_error tac (λ msg pos,
-     let msg := msg.get_or_else (λ _, to_fmt "⟨empty⟩") (),
-         pos := match pos with
-                | none := to_fmt ""
-                | (some val) := to_fmt val
-                end in
-     trace!"failed {tag} {pos}\n  {msg}" >> trace_state) <*
-   trace!"end {tag}"
-
-meta def trace_scope {α} (tac : tactic α) (n : name . synth_def_name) : tactic α :=
-trace_scope' (pure $ to_fmt "") tac n
-
-namespace interactive
 
 /-- build an instance of testable for the given proposition
   -/
@@ -85,6 +56,11 @@ end)
 
 open slim_check.test_result nat
 
+namespace interactive
+
+/-- in a goal of the shape `⊢ p` where `p` is testable, try to find
+counter-examples to falsify `p`. If one is found, an assignment to the
+local variables is printed. Otherwise, the goal is `admit`-ed.  -/
 meta def slim_check (bound : ℕ := 100) : tactic unit :=
 do unfreeze_local_instances,
    n ← revert_all,

@@ -25,15 +25,16 @@ def rand_g (g : Type) := state (ulift g)
 def rand := rand_g std_gen
 
 instance (g : Type) : liftable (rand_g.{u} g) (rand_g.{v} g) :=
-@state_t.liftable' _ _ _ _ _ _ _ (equiv.ulift.trans.{u u u u u} equiv.ulift.symm)
+@state_t.liftable' _ _ _ _ _ (equiv.ulift.trans.{u u u u u} equiv.ulift.symm)
 
-open ulift
+open ulift (hiding inhabited)
 
 /-- Generate one more `ℕ` -/
 def random.next {gen : Type} [random_gen gen] : rand_g gen ℕ :=
 ⟨ prod.map id up ∘ random_gen.next ∘ down ⟩
 
 /-- `range i j` is a number between `i` and `j` inclusively -/
+@[nolint has_inhabited_instance]
 def range {α : Type u} [has_le α] (i j : α) :=
 { x : α // i ≤ x ∧ x ≤ j }
 
@@ -124,9 +125,8 @@ namespace tactic.interactive
 meta def mk_generator : tactic std_gen := do
 tactic.unsafe_run_io @io.mk_generator
 
--- meta def tactic' (α : Type u) : Type (max u 1) :=
--- Π (β : Type), (α → tactic β) → tactic β
-
+/-- run `cmd` using the a randomly seeded random number generator
+in the tactic monad -/
 meta def run_rand {α : Type u} (cmd : rand α) : tactic α := do
 ⟨g⟩ ← tactic.up mk_generator,
 return (cmd.run ⟨g⟩).1
@@ -159,24 +159,28 @@ end random
 end tactic.interactive
 
 instance : preorder bool :=
-{ le := λ p q, p → q
-, le_refl := by { introv h, apply h }
-, le_trans := by { introv ha hb h, apply hb, apply ha h } }
+{ le := λ p q, p → q,
+  le_refl := by { introv h, apply h },
+  le_trans := by { introv ha hb h, apply hb, apply ha h } }
 
 namespace bool
 
+/-- Make `i` into an element of the interval `x .. y` if feasible
+and return an arbitrary element of `x .. y` otherwise -/
 def coerce (x y : bool) (p : x ≤ y) (i : bool) : x .. y := do
   if hx : x ≤ i ∧ i ≤ y
   then ⟨ i, hx ⟩
   else ⟨ x , le_refl x , p ⟩
 
-open ulift
+open ulift (hiding inhabited)
 variables {gen : Type} [random_gen gen]
 
+/-- generate a randomly generated boolean value -/
 protected def get_random : rand_g gen bool :=
 ⟨ prod.map id up ∘ @rand_bool gen _ ∘ down ⟩
 
 /-- generator for a series of bits -/
+@[derive inhabited]
 structure bool_generator (g : Type) :=
   (next : bool)
   (queue : ℕ × ℕ)
@@ -191,9 +195,10 @@ let (r,g') := random_gen.next g in
 
 /-- get the next bit from a `bool_generator` -/
 protected def next : bool_generator gen → bool_generator gen
- | ⟨_,(_,0),g⟩ := bool.first g
- | ⟨_,(n,k),g⟩ := ⟨(n%2 = 1),(n/2,k-1),g⟩
+| ⟨_,(_,0),g⟩ := bool.first g
+| ⟨_,(n,k),g⟩ := ⟨(n%2 = 1),(n/2,k-1),g⟩
 
+/-- generate an infinite series of states of a random boolean generator -/
 protected def random_series_aux (g : gen) : stream (bool_generator gen) :=
 stream.iterate bool.next (bool.first g)
 
@@ -204,19 +209,19 @@ stream.map bool.bool_generator.next $ bool.random_series_aux g
 end bool
 
 instance : random bool :=
-{ to_has_le := by apply_instance
-, random   := λ g, @bool.get_random _
-, random_r := λ g _inst x y p, bool.coerce _ _ p <$> (@bool.get_random g _inst)
-, random_series   := @bool.random_series
-, random_series_r := λ gen _inst x y p g, stream.map (bool.coerce _ _ p) $ @bool.random_series _ _inst g }
+{ to_has_le := by apply_instance,
+  random   := λ g, @bool.get_random _,
+  random_r := λ g _inst x y p, bool.coerce _ _ p <$> (@bool.get_random g _inst),
+  random_series   := @bool.random_series,
+  random_series_r := λ gen _inst x y p g, stream.map (bool.coerce _ _ p) $ @bool.random_series _ _inst g }
 
 instance (n : ℕ) : preorder (bitvec n) :=
-{ le := λ x y, x.to_nat ≤ y.to_nat
-, le_refl  := by { introv, apply nat.le_refl }
-, le_trans := by { introv ha hb, apply nat.le_trans ha hb } }
+{ le := λ x y, x.to_nat ≤ y.to_nat,
+  le_refl  := by { introv, apply nat.le_refl },
+  le_trans := by { introv ha hb, apply nat.le_trans ha hb } }
 
-lemma bitvec.le_def {n : ℕ} (x y : bitvec n)
-: x ≤ y ↔ x.to_nat ≤ y.to_nat :=
+lemma bitvec.le_def {n : ℕ} (x y : bitvec n) :
+  x ≤ y ↔ x.to_nat ≤ y.to_nat :=
 by refl
 
 open nat (succ one_add mod_eq_of_lt zero_lt_succ add_one succ_le_succ)
@@ -227,10 +232,10 @@ variable {α : Type u}
 
 open list (length) stream (approx)
 
-lemma length_approx
-: ∀ (s : stream α) (n : ℕ), length (approx n s) = n
- | s 0 := rfl
- | s (succ n) := by simp [approx,length,one_add,length_approx]
+lemma length_approx :
+  ∀ (s : stream α) (n : ℕ), length (approx n s) = n
+| s 0 := rfl
+| s (succ n) := by simp [approx,length,one_add,length_approx]
 
 end stream
 
@@ -255,8 +260,8 @@ include P'
 
 local infix ^ := nat.pow
 
-lemma bitvec.interval_fits_in_word_size
-: x.to_nat + i' % (1 + (y.to_nat - x.to_nat)) < 2^n :=
+lemma bitvec.interval_fits_in_word_size :
+  x.to_nat + i' % (1 + (y.to_nat - x.to_nat)) < 2^n :=
 begin
   let x' := x.to_nat,
   let y' := y.to_nat,
@@ -289,11 +294,10 @@ end coerce
 
 open nat
 
-/-- if `i` is in the range `x .. y`, return `i`, otherwise, return
-an arbitrary element of `x .. y` -/
+/-- Use `i` to generate an element of the interval `x .. y` -/
 protected def bitvec.coerce {n : ℕ} (x y : bitvec n) (P : x ≤ y)
-  (i : bitvec n)
-: (x .. y) :=
+  (i : bitvec n) :
+  (x .. y) :=
 let x' := x.to_nat,
     y' := y.to_nat,
     i' := i.to_nat,
@@ -325,6 +329,7 @@ have Hy : bitvec.of_nat n r ≤ y,
   end,
 ⟨ bitvec.of_nat _ r , Hx , Hy ⟩
 
+/-- generate an infinite series of bitvectors -/
 protected def bitvec.random_series (n : ℕ) (g : gen) : stream (bitvec n) :=
 stream.corec
 (λ s, ⟨ stream.approx n s, stream.length_approx _ _ ⟩)
@@ -350,8 +355,9 @@ begin
   apply of_as_true, trivial
 end
 
+/-- `word_size n` gives us the number of bits required to represent `n` -/
 def word_size : ℕ → ℕ
- | x :=
+| x :=
 if h : 1 < x then
   have (x + 1) / 2 < x,
     from div_two_round_up _ h,
@@ -387,15 +393,20 @@ namespace fin
 section fin
 parameter {n : ℕ}
 
+/-- is 2^31; multiplying by it shifts a number left by 31 bits,
+dividing by it shifts it right by 31 bits -/
 def shift_31l : ℕ :=
 by apply_normed 2^31
 
+/-- `random_aux m k` `m` words worth of random numbers and combine them
+with `k` -/
 protected def random_aux : ℕ → ℕ → rand_g gen (fin (succ n))
- | 0 k := return $ fin.of_nat k
- | (succ n) k :=
+| 0 k := return $ fin.of_nat k
+| (succ n) k :=
 do x ← random.next,
    random_aux n $ x + (k * shift_31l)
 
+/-- generate a `fin` randomly -/
 protected def random : rand_g gen (fin (succ n)) :=
 let m := word_size n / 31 + 1 in
 random_aux m 0
@@ -405,8 +416,6 @@ section coerce
 parameters {i' r k : ℕ}
 parameters {y : fin k}
 
--- def x' := x.val
--- def y' := y.val
 parameters {x' : ℕ}
 
 parameters P' : x' ≤ y.val
@@ -423,9 +432,10 @@ begin
 end
 end coerce
 
+
+/-- Use `i` to generate an element of the interval `x .. y` -/
 protected def coerce {n : ℕ} (x y : fin (succ n)) (P : x ≤ y)
-  (i : fin (succ n))
-: (x .. y) :=
+  (i : fin (succ n)) : (x .. y) :=
 let x' := x.val,
     i' := i.val,
     r := i' % (y.val - x' + 1) + x' in
@@ -458,6 +468,7 @@ have Hy : fin.of_nat r ≤ y,
   end,
 ⟨ fin.of_nat r , Hx , Hy ⟩
 
+/-- generate an element of the interval `x .. y` -/
 protected def random_r (x y : fin (succ n)) (p : x ≤ y) : rand_g gen (x .. y) :=
 fin.coerce _ _ p <$> fin.random
 
@@ -465,12 +476,14 @@ end fin
 end fin
 
 instance fin_random (n : ℕ) : random (fin (succ n)) :=
-{ to_has_le := by apply_instance
-, random := λ g, @fin.random _ g
-, random_r := λ x y p, @fin.random_r n x y p }
+{ to_has_le := by apply_instance,
+  random := λ g, @fin.random _ g,
+  random_r := λ x y p, @fin.random_r n x y p }
 
 open nat
 
+/-- A value of type `fin n` rather than `fin (succ n)` relying
+instead on a proof that `n` is positive. -/
 def random_fin_of_pos : ∀ (n : ℕ) (h : 0 < n), random (fin n)
- | (succ n) _ := fin_random _
- | 0 h := false.elim (not_lt_zero _ h)
+| (succ n) _ := fin_random _
+| 0 h := false.elim (not_lt_zero _ h)
