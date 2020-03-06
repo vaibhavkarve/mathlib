@@ -177,9 +177,9 @@ protected def get_random : rand_g gen bool :=
 /-- generator for a series of bits -/
 @[derive inhabited]
 structure bool_generator (g : Type) :=
-  (next : bool)
-  (queue : ℕ × ℕ)
-  (gen : g)
+(next : bool)
+(queue : ℕ × ℕ)
+(gen : g)
 
 /-- create a `bool_generator` from `g` -/
 protected def first (g : gen) : bool_generator gen  :=
