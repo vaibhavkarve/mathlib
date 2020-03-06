@@ -184,9 +184,9 @@ structure bool_generator (g : Type) :=
 /-- create a `bool_generator` from `g` -/
 protected def first (g : gen) : bool_generator gen  :=
 let (r,g') := random_gen.next g in
-{ next := r % 2 = 1
-, queue := (r / 2,30)
-, gen := g' }
+{ next := r % 2 = 1,
+  queue := (r / 2,30),
+  gen := g' }
 
 /-- get the next bit from a `bool_generator` -/
 protected def next : bool_generator gen → bool_generator gen
