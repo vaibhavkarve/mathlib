@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2020 Simon Hudon. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Author(s): Simon Hudon
+-/
+
 import algebra.group_power
 import category.liftable
 
@@ -12,6 +18,33 @@ import tactic.norm_num
 
 import system.io
 import system.random
+
+/-!
+# Rand Monad and Random Class
+
+This module provides tools for formulating computations guided by randomness and for
+defining objects that can be created randomly.
+
+## Main definitions
+  * `rand` monad for computations guided by randomness;
+  * `random` class for objects that can be generated randomly;
+    * `random` to generate one object;
+    * `random_r` to generate one object inside a range;
+    * `random_series` to generate an infinite series of objects;
+    * `random_series_r` to generate an infinite series of objects inside a range;
+  * `io.mk_generator` to create a new random number generator;
+  * `io.run_rand` to run a randomized computation inside the `io` monad;
+  * `tactic.run_rand` to run a randomized computation inside the `tactic` monad
+
+## Tags
+
+random monad io
+
+## References
+
+  * Similar library in Haskell: https://hackage.haskell.org/package/MonadRandom
+
+-/
 
 open list io applicative
 

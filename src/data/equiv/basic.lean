@@ -431,6 +431,23 @@ def Pi_congr_right {α} {β₁ β₂ : α → Sort*} (F : ∀ a, β₁ a ≃ β�
 ⟨λ H a, F a (H a), λ H a, (F a).symm (H a),
  λ H, funext $ by simp, λ H, funext $ by simp⟩
 
+def Pi_congr_left {α₁ α₂} {β₁ : α₂ → Sort*}
+  (F : α₁ ≃ α₂) :
+  (Π a, β₁ a) ≃ (Π a, β₁ (F a)) :=
+{ to_fun := λ f a, f (F a),
+  inv_fun := λ f a, cast (by simp) (f $ F.symm a),
+  left_inv := by { introv _, ext, simp, h_generalize h : _ == k,
+                   generalize_hyp h' : F (F.symm x_1) = y at h,
+                   simp at h', subst h', apply eq_of_heq h.symm },
+  right_inv := by { introv _, ext, simp, h_generalize h : _ == k,
+                   generalize_hyp h' : F.symm (F x_1) = y at h,
+                   simp at h', subst h', apply eq_of_heq h.symm } }
+
+def Pi_congr {α₁ α₂} {β₁ : α₁ → Sort*} {β₂ : α₂ → Sort*}
+  (F : α₁ ≃ α₂)
+  (G : ∀ a, β₁ a ≃ β₂ (F a)) : (Π a, β₁ a) ≃ (Π a, β₂ a) :=
+equiv.trans (Pi_congr_right G) (Pi_congr_left F).symm
+
 def Pi_curry {α} {β : α → Sort*} (γ : Π a, β a → Sort*) : (Π x : sigma β, γ x.1 x.2) ≃ (Π a b, γ a b) :=
 { to_fun := λ f x y, f ⟨x,y⟩,
   inv_fun := λ f x, f x.1 x.2,
