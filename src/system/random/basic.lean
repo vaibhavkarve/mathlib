@@ -48,9 +48,9 @@ class random (α : Type u) extends has_le α :=
 (random_r : Π g [random_gen g] (x y : α),
               x ≤ y →
               rand_g g (x .. y))
-(random_series : Π (gen : Type) [random_gen gen], gen → stream α :=
+(random_series : Π (g : Type) [random_gen g], g → stream α :=
 by { intros, resetI,
-     exact corec prod.fst ((random gen).run ∘ prod.snd) ( (random gen).run ⟨ a ⟩ ) } )
+     exact corec prod.fst ((random g).run ∘ prod.snd) ( (random g).run ⟨ a ⟩ ) } )
 (random_series_r : Π (g : Type) [random_gen g] (x y : α)
                         (h : x ≤ y),
                         g →
