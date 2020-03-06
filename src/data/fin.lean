@@ -714,8 +714,4 @@ end find
   (@fin.of_nat m n).val = n % succ m :=
 by refl
 
-@[simp] lemma val_of_nat {m n : ℕ} (h : n < nat.succ m) :
-  (@fin.of_nat m n).val = n :=
-by rw [fin.val_of_nat_eq_mod,mod_eq_of_lt h]
-
 end fin
