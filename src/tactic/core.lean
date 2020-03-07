@@ -1599,17 +1599,4 @@ do n ← ident,
    mk_simp_attr n with_list,
    add_doc_string (name.append `simp_attr n) $ descr.get_or_else $ "simp set for " ++ to_string n
 
-/-- Use the name of the enclosing definition to solve the goal -/
-meta def synth_def_name : tactic unit :=
-do n ← decl_name,
-   tactic.exact `(n)
-
-/-- `on_error tac f` executes `tac` and calls `f` if `tac` fails  -/
-meta def on_error {α} (tac : tactic α)
-  (hdlr : option (unit → format) → option pos → tactic unit) : tactic α
-| s := match tac s with
-       | x@(result.success _ _) := x
-       | (result.exception msg pos s') := (hdlr msg pos >> result.exception msg pos) s'
-       end
-
 end tactic
