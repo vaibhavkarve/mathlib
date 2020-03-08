@@ -1141,6 +1141,8 @@ apply_nolint units.map_equiv doc_blame
 -- data/equiv/basic.lean
 apply_nolint equiv has_inhabited_instance
 apply_nolint equiv.Pi_congr_right doc_blame
+apply_nolint equiv.Pi_congr_left doc_blame
+apply_nolint equiv.Pi_congr doc_blame
 apply_nolint equiv.Pi_curry doc_blame
 apply_nolint equiv.Prop_equiv_bool doc_blame
 apply_nolint equiv.arrow_arrow_equiv_prod_arrow doc_blame
