@@ -263,7 +263,7 @@ begin
   let x' := x.to_nat,
   let y' := y.to_nat,
   apply @lt_of_lt_of_le _ _ _ (x' + (y' - x' + 1)),
-  { apply add_lt_add_left, simp,
+  { apply add_lt_add_left, simp only [add_comm _ 1],
     apply nat.mod_lt,
     rw one_add, apply zero_lt_succ },
   { rw [← add_assoc,← nat.add_sub_assoc P',nat.add_sub_cancel_left,add_one],
@@ -275,14 +275,14 @@ begin
     clear x' x y' Hy y n,
     induction z with x xs,
     { rw [list.length,list.foldr,nat.pow] },
-    { simp [foldr,length,one_add,pow_succ,flip,bitvec.add_lsb],
-      transitivity succ (1 +
+    { simp [foldr,length,one_add,pow_succ,flip,bitvec.add_lsb,add_comm _ 1],
+      transitivity succ
        (foldr (λ (b : bool) (a : ℕ), a + (a + cond b 1 0)) 0 xs +
-          foldr (λ (b : bool) (a : ℕ), a + (a + cond b 1 0)) 0 xs)),
-      { apply succ_le_succ, apply add_le_add_right,
+          (foldr (λ (b : bool) (a : ℕ), a + (a + cond b 1 0)) 0 xs + 1)),
+      { apply succ_le_succ, apply add_le_add_left, apply add_le_add_left,
         cases x, apply nat.zero_le, refl, },
-      { simp!,
-        rw [← nat.add_succ,← nat.add_succ,one_add,← nat.succ_add,mul_comm,← two_mul],
+      { simp! only,
+        rw [← nat.add_succ,nat.add_succ,← nat.succ_add,← nat.succ_eq_add_one,mul_comm,← two_mul],
         apply nat.mul_le_mul_left,
         simp [flip,bitvec.add_lsb] at z_ih,
         apply z_ih } }, },
@@ -302,7 +302,7 @@ let x' := x.to_nat,
 have Hx : x ≤ bitvec.of_nat n r,
   begin
     unfold_locals r,
-    simp [bitvec.le_def,bitvec.to_nat_of_nat],
+    simp only [bitvec.le_def,bitvec.to_nat_of_nat,add_comm _ x',add_comm _ 1],
     rw [mod_eq_of_lt],
     { apply nat.le_add_right },
     unfold_locals x' y' i',
@@ -322,7 +322,8 @@ have Hy : bitvec.of_nat n r ≤ y,
     { transitivity x' + (y' - x'),
       apply le_of_eq, ac_refl,
       rw [← nat.add_sub_assoc P,nat.add_sub_cancel_left], },
-    simp, apply bitvec.interval_fits_in_word_size P,
+    simp only [add_comm _ x',add_comm _ 1],
+    apply bitvec.interval_fits_in_word_size P,
   end,
 ⟨ bitvec.of_nat _ r , Hx , Hy ⟩
 
@@ -369,9 +370,8 @@ include P'
 lemma interval_fits_in_word_size : x' + i' % (1 + (y.val - x')) < k :=
 begin
   apply @lt_of_lt_of_le _ _ _ (x' + (y.val - x' + 1)),
-  { apply add_lt_add_left, simp,
-    apply nat.mod_lt,
-    rw one_add, apply zero_lt_succ },
+  { apply add_lt_add_left, simp only [add_comm 1],
+    apply nat.mod_lt, apply zero_lt_succ },
   { rw [← add_assoc,← nat.add_sub_assoc P',nat.add_sub_cancel_left,add_one],
     apply y.is_lt }
 end
@@ -389,7 +389,7 @@ have P' : x.val ≤ y.val,
 have Hx : x ≤ fin.of_nat r,
   begin
     unfold_locals r,
-    simp [fin.le_def,fin.val_of_nat_eq_mod],
+    simp only [fin.le_def,fin.val_of_nat_eq_mod,add_comm _ x',add_comm _ 1],
     rw [mod_eq_of_lt],
     { apply nat.le_add_right },
     apply fin.interval_fits_in_word_size,
@@ -409,7 +409,8 @@ have Hy : fin.of_nat r ≤ y,
     { transitivity x' + (y.val - x'),
       apply le_of_eq, ac_refl,
       rw [← nat.add_sub_assoc P',nat.add_sub_cancel_left], },
-    simp, apply fin.interval_fits_in_word_size P',
+    simp only [add_comm _ x',add_comm _ 1],
+    apply fin.interval_fits_in_word_size P',
   end,
 ⟨ fin.of_nat r , Hx , Hy ⟩
 
