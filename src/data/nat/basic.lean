@@ -1411,12 +1411,6 @@ def log (b : ℕ) : ℕ → ℕ
     log (n / b) + 1
   else 0
 
-/-- logarithm in base 2 -/
-def log2 := log 2
-
-/-- logarithm in base 10 -/
-def log10 := log 10
-
 lemma exp_le_iff_le_log (x y : ℕ) {b} (hb : 1 < b) (hy : 1 ≤ y) :
   b^x ≤ y ↔ x ≤ log b y :=
 begin
