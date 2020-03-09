@@ -28,10 +28,6 @@ to transport over to `option.{v}`. `liftable` is an attempt at improving the sit
 
 universe polymorphism functor
 
-## References
-
-  * https://hackage.haskell.org/package/QuickCheck
-
 -/
 
 universes u₀ u₁ v₀ v₁ v₂ w w₀ w₁
