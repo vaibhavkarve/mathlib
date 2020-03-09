@@ -1435,7 +1435,7 @@ begin
     replace h := le_of_not_gt h,
     rw [← nat.sub_le_right_iff_le_add,← y_a (y / b),
           le_div_iff_mul_le _ _ h'',← pow_succ],
-    cases x; simp [h,hy],
+    { cases x; simp [h,hy] },
     { apply div_lt_self; assumption },
     { rwa [le_div_iff_mul_le _ _ h'',one_mul], } }
 end
