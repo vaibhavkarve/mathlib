@@ -1434,7 +1434,7 @@ begin
       rw [h',pow_zero], exact hy} },
 end
 
-lemma log_exp (b x : ℕ) (hb : b > 1) : log b (b ^ x) = x :=
+lemma log_exp (b x : ℕ) (hb : 1 < b) : log b (b ^ x) = x :=
 eq_of_forall_le_iff $ λ z,
 by { rwa [← exp_le_iff_le_log _ _ hb,pow_le_iff_le_right],
      rw ← pow_zero b, apply pow_le_pow_of_le_right,
