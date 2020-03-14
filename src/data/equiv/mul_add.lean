@@ -63,6 +63,9 @@ lemma map_mul (f : M ≃* N) : ∀ x y, f (x * y) = f x * f y := f.map_mul'
 @[to_additive]
 instance (h : M ≃* N) : is_mul_hom h := ⟨h.map_mul⟩
 
+@[simp, to_additive]
+lemma coe_mk (f g h₁ h₂ h₃) : ⇑(⟨f, g, h₁, h₂, h₃⟩ : M ≃* N) = f := rfl
+
 /-- Makes a multiplicative isomorphism from a bijection which preserves multiplication. -/
 @[to_additive]
 def mk' (f : M ≃ N) (h : ∀ x y, f (x * y) = f x * f y) : M ≃* N :=
@@ -171,7 +174,6 @@ lemma add_equiv.map_sub [add_group A] [add_group B] (h : A ≃+ B) (x y : A) :
   h (x - y) = h x - h y :=
 h.to_add_monoid_hom.map_sub x y
 
-
 /-- The group of multiplicative automorphisms. -/
 @[to_additive "The group of additive automorphisms."]
 def mul_aut (M : Type*) [has_mul M] := M ≃* M
@@ -193,6 +195,17 @@ by refine_struct
 intros; ext; try { refl }; apply equiv.left_inv
 
 instance : inhabited (mul_aut M) := ⟨1⟩
+
+instance : has_coe_to_fun (mul_aut M) := ⟨_, mul_equiv.to_fun⟩
+
+@[simp] lemma mul_apply (g h : mul_aut M) (x) : (g * h) x = g (h x) := rfl
+
+@[simp] lemma one_apply (x) : (1 : mul_aut M) x = x := rfl
+
+@[simp] lemma coe_mk (f g h₁ h₂ h₃) : ⇑(⟨f, g, h₁, h₂, h₃⟩ : mul_aut M) = f := rfl
+
+@[ext] lemma ext ⦃e₁ e₂ : mul_aut M⦄ (h : ∀ x, e₁ x = e₂ x) : e₁ = e₂ :=
+mul_equiv.ext h
 
 /-- Monoid hom from the group of multiplicative automorphisms to the group of permutations. -/
 def to_perm : mul_aut M →* equiv.perm M :=
@@ -217,6 +230,17 @@ by refine_struct
 intros; ext; try { refl }; apply equiv.left_inv
 
 instance : inhabited (add_aut A) := ⟨1⟩
+
+instance : has_coe_to_fun (add_aut A) := ⟨_, add_equiv.to_fun⟩
+
+@[simp] lemma mul_apply (g h : add_aut A) (x) : (g * h) x = g (h x) := rfl
+
+@[simp] lemma one_apply (x) : (1 : add_aut A) x = x := rfl
+
+@[simp] lemma coe_mk (f g h₁ h₂ h₃) : ⇑(⟨f, g, h₁, h₂, h₃⟩ : add_aut A) = f := rfl
+
+@[ext] lemma ext ⦃e₁ e₂ : add_aut A⦄ (h : ∀ x, e₁ x = e₂ x) : e₁ = e₂ :=
+add_equiv.ext h
 
 /-- Monoid hom from the group of multiplicative automorphisms to the group of permutations. -/
 def to_perm : add_aut A →* equiv.perm A :=
